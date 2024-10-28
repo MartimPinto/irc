@@ -51,3 +51,14 @@ std::string intToStr(int num)
     oss << num;
     return oss.str();
 }
+
+std::string extractCommand(std::string &cmd)
+{
+    std::string message = cmd.substr(5);
+	size_t endPos = message.find("\r\n");
+    if (endPos != std::string::npos)
+        message = message.substr(0, endPos);
+    message = trim(message);
+	removeNewlines(message);
+    return message;
+}

@@ -6,13 +6,13 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 17:12:05 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/09/12 15:41:33 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/10/28 12:08:23 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Client.hpp"
 
-Client::Client(): _authenticated(false), _registered(false){}
+Client::Client(): _authenticated(false), _registered(false), _operator(false){}
 
 int Client::getFd()
 {
@@ -76,6 +76,16 @@ void Client::registerClient()
 {
 	_registered = true;
 }
+
+bool Client::isOperator()
+{
+	return this->_operator;
+}
+
+void Client::setOperator()
+{
+	_operator = true;
+}	
 
 void Client::setRealname(std::string realname)
 {

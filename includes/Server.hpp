@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/13 12:06:14 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/10/24 16:56:37 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/10/28 12:17:55 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ class Server
 			void handlePrivMSG(std::string cmd, Client &cli);
 			void handleList(Client &cli);
 			void handleQuit(std::string cmd, int fd);
-
+			void handleTopic(std::string cmd, Client &cli);
 };
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:47:43 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/10/24 16:15:31 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/10/28 11:53:35 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -138,6 +138,11 @@ Client *Channel::getOperator(int fd)
 int Channel::getNumUsers() const
 {
 	return this->_clients.size();
+}
+
+std::string Channel::getTopic() const
+{
+	return this->_topic;
 }
 
 void Channel::sendAll(std::string msg)

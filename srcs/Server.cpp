@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: juno <juno@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/10/24 16:58:00 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/10/28 12:18:44 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,6 +182,11 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 				handlePrivMSG(cmd, cli);
 			else if (cmd.find("LIST") == 0 || cmd.find("list") == 0)
 				handleList(cli);
+			else if (cli.isOperator())
+			{
+				if (cmd.find("TOPIC") == 0 || cmd.find("topic") == 0)
+					handleTopic(cmd, cli);
+			}
 		}
 		else
 		{
@@ -284,10 +289,10 @@ void Server::handleJoin(std::string cmd, Client &cli)
 	}
 	std::pair<std::map<std::string, Channel>::iterator, bool> result = _channels.insert(std::make_pair(channel, Channel(channel)));
     Channel &chan = result.first->second;
-	
     if (result.second) 
 	{
         chan.addOperator(cli);
+		cli.setOperator();
         log("Created new channel: " + channel);
     }
 	chan.addClient(&cli);
@@ -422,6 +427,26 @@ void Server::handleList(Client &cli)
 		++it;
 	}
 }
+
+void Server::handleTopic(std::string cmd, Client &cli)
+{
+	std::string channel = cmd.substr(6);
+	size_t endPos = channel.find("\r\n");
+	if (endPos != std::string::npos)
+		channel = channel.substr(0, endPos);
+	channel = trim(channel);
+	removeNewlines(channel);
+	std::map<std::string, Channel>::iterator it = _channels.find(channel);
+	if (channel.empty() || channel[0] != '#' || channel.size() > 50 || it == _channels.end())
+	{
+		sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
+		return;
+	}
+	
+	
+}
+
+	
 
 void Server::handleQuit(std::string cmd, int fd)
 {

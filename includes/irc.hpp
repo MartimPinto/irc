@@ -60,6 +60,7 @@ void removeNewlines(std::string &str);
 void removeSpacesAtStart(std::string &str);
 std::string trim(const std::string& str);
 std::string intToStr(int num);
+std::string extractCommand(std::string &cmd);
 
 
 

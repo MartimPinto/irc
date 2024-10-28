@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 16:56:24 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/09/12 16:11:25 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/10/28 12:07:28 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,9 @@ class Client
 			std::string getUsername();
 			void setUsername(std::string username);
 			bool isRegistered();
+			bool isOperator();
 			void registerClient();
+			void setOperator();
 			void setRealname(std::string realname);
 			std::string getRealname();
 			void setHostname(std::string hostname);
@@ -49,6 +51,7 @@ class Client
 			std::string _ip;
 			bool _authenticated;
 			bool _registered;
+			bool _operator;
 			std::string _nickname;
 			std::string _username;
 			std::string _realname;
