@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:42:11 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/10/28 11:53:17 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/10/28 16:03:30 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ class Channel
 	private:
 			std::string _name;
 			std::string _topic;
+			bool _topicProtected;
 			std::vector<Client *> _clients;
 			std::vector<Client *> _operators;
 
@@ -43,6 +44,11 @@ class Channel
 			Client *getOperator(int fd);
 			void sendAll(std::string msg);
 			std::string getTopic() const;
+			void setTopic(const std::string &topic);
+			void setTopicProtected(bool protectedTopic);
+			bool hasTopic() const;
+			bool isTopicProtected();
+			
 };
 
 #endif

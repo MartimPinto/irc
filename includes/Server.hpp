@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/13 12:06:14 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/10/28 12:17:55 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/10/28 12:28:16 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,7 @@ class Server
 			void handleList(Client &cli);
 			void handleQuit(std::string cmd, int fd);
 			void handleTopic(std::string cmd, Client &cli);
+			void handleKick(std::string cmd, Client &cli);
 };
 
 #endif

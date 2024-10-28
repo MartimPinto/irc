@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/10/28 12:18:44 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/10/28 17:11:00 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,10 +182,12 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 				handlePrivMSG(cmd, cli);
 			else if (cmd.find("LIST") == 0 || cmd.find("list") == 0)
 				handleList(cli);
+			else if (cmd.find("TOPIC") == 0 || cmd.find("topic") == 0)
+				handleTopic(cmd, cli);
 			else if (cli.isOperator())
 			{
-				if (cmd.find("TOPIC") == 0 || cmd.find("topic") == 0)
-					handleTopic(cmd, cli);
+				if (cmd.find("KICK") == 0 || cmd.find("kick") == 0)
+					handleKick(cmd, cli);
 			}
 		}
 		else
@@ -199,12 +201,7 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 
 void Server::handleNick(std::string cmd, Client &cli)
 {
-	std::string nick = cmd.substr(5);
-	size_t endPos = nick.find("\r\n");
-    if (endPos != std::string::npos)
-        nick = nick.substr(0, endPos);
-    nick = trim(nick);
-	removeNewlines(nick);
+	std::string nick = extractCommand(cmd, 5);
 	if (nick.empty() || nick.size() > 9 || nick[0] == '#' || nick[0] == '&' || nick[0] == ':')
 	{
 		sendResponse(ERR_ERRONEUSNICKNAME(cli.getNick()), cli.getFd());
@@ -275,12 +272,7 @@ void Server::handleUser(std::string cmd, Client &cli)
 
 void Server::handleJoin(std::string cmd, Client &cli)
 {
-	std::string channel = cmd.substr(5);
-	size_t endPos = channel.find("\r\n");
-	if (endPos != std::string::npos)
-		channel = channel.substr(0, endPos);
-	channel = trim(channel);
-	removeNewlines(channel);
+	std::string channel = extractCommand(cmd, 5);
 	if (channel.empty() || channel[0] != '#' || channel.size() > 50)
 	{
 		std::string error = "ERROR: Invalid channel name\r\n";
@@ -317,12 +309,7 @@ void Server::handleJoin(std::string cmd, Client &cli)
 
 void Server::handlePart(std::string cmd, Client &cli)
 {
-	std::string channel = cmd.substr(5);
-	size_t endPos = channel.find("\r\n");
-	if (endPos != std::string::npos)
-		channel = channel.substr(0, endPos);
-	channel = trim(channel);
-	removeNewlines(channel);
+	std::string channel = extractCommand(cmd, 5);
 	if (channel.empty() || channel[0] != '#' || channel.size() > 50)
 	{
 		sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
@@ -358,7 +345,6 @@ void Server::handlePart(std::string cmd, Client &cli)
 
 void Server::handlePrivMSG(std::string cmd, Client &cli)
 {
-	printChannelNames();
 	std::istringstream iss(cmd);
 	std::string command, target, message;
 
@@ -422,26 +408,111 @@ void Server::handleList(Client &cli)
 		std::string name = it->first;
 		int numUsers = it->second.getNumUsers();
 		std::string numUsersStr = intToStr(numUsers);
-		std::string response = RPL_LIST(cli.getNick(), name, numUsersStr);
+		std::string topic = it->second.getTopic();
+		std::string response = RPL_LIST(cli.getNick(), name, numUsersStr, topic);
 		send(cli.getFd(), response.c_str(), response.length(), 0);
 		++it;
 	}
 }
 
-void Server::handleTopic(std::string cmd, Client &cli)
+void Server::handleKick(std::string cmd, Client &cli)
 {
-	std::string channel = cmd.substr(6);
-	size_t endPos = channel.find("\r\n");
-	if (endPos != std::string::npos)
-		channel = channel.substr(0, endPos);
-	channel = trim(channel);
-	removeNewlines(channel);
+	std::istringstream iss(cmd);
+	std::string command, channel, user, message;
+	iss >> command >> channel >> user;
+	std::getline(iss, message);
+	removeSpacesAtStart(message);
+	if (!message.empty() && message[0] == ':')
+		message = message.substr(1);
+	if (message.empty())
+		message = "No reason specified";
 	std::map<std::string, Channel>::iterator it = _channels.find(channel);
 	if (channel.empty() || channel[0] != '#' || channel.size() > 50 || it == _channels.end())
 	{
 		sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
 		return;
 	}
+	Channel &chan = it->second;
+	if (!chan.isOperator(cli))
+	{
+		sendResponse(ERR_CHANOPRIVSNEEDED(channel), cli.getFd());
+		return;
+	}
+	Client *target = getClientNick(user);
+	if (target == NULL)
+	{
+		sendResponse(ERR_NOSUCHNICK(user), cli.getFd());
+		return;
+	}
+	if (!chan.isClientInChannel(*target))
+	{
+		sendResponse(ERR_NOTONCHANNEL(channel), cli.getFd());
+		return;
+	}
+	chan.removeClient(target);
+	target->leaveChannel(channel);
+	std::string kickMsg = ":" + cli.getNick() + " KICK " + channel + " " + user + " :" + message + "\r\n";
+	std::vector<Client *> clientsInChannel = chan.getClients();
+	for (size_t i = 0; i < clientsInChannel.size(); ++i)
+	{
+		send(clientsInChannel[i]->getFd(), kickMsg.c_str(), kickMsg.length(), 0);
+	}
+	send(target->getFd(), kickMsg.c_str(), kickMsg.length(), 0);
+	log(cli.getNick() + " kicked " + user + " from channel " + channel);
+	if (chan.getClients().empty())
+	{
+		_channels.erase(it);
+		log("Channel " + channel + " has been deleted");
+	}
+}
+
+void Server::handleTopic(std::string cmd, Client &cli)
+{
+	std::istringstream iss(cmd);
+	std::string command, channel, topic;
+	iss >> command >> channel;
+	std::getline(iss, topic);
+	removeSpacesAtStart(topic);
+	if (!topic.empty() && topic[0] == ':')
+		topic = topic.substr(1);
+	std::map<std::string, Channel>::iterator it = _channels.find(channel);
+	if (channel.empty() || channel[0] != '#' || channel.size() > 50 || it == _channels.end())
+	{
+		sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
+		return;
+	}
+	Channel &chan = it->second;
+	if (!chan.isClientInChannel(cli))
+	{
+		sendResponse(ERR_NOTONCHANNEL(channel), cli.getFd());
+		return;
+	}
+	if (!topic.empty())
+	{
+		if (chan.isTopicProtected() || !chan.isOperator(cli))
+		{
+			sendResponse(ERR_CHANOPRIVSNEEDED(channel), cli.getFd());
+			return;
+		}
+		chan.setTopic(topic);
+		std::string topicMsg = ":" + cli.getNick() + " TOPIC " + channel + " :" + topic + CRLF;
+		chan.broadcastMessage(topicMsg, cli.getFd());
+		log(cli.getNick() + " set topic for channel " + channel + ": " + topic);
+	}
+	else
+	{
+		if (chan.hasTopic())
+		{
+			std::string currentTopicMsg = RPL_TOPIC(channel, chan.getTopic());
+        	send(cli.getFd(), currentTopicMsg.c_str(), currentTopicMsg.length(), 0);
+		}
+		else
+		{
+			std::string noTopicMsg = RPL_NOTOPIC(channel);
+			send(cli.getFd(), noTopicMsg.c_str(), noTopicMsg.length(), 0);
+		}
+	}
+	
 	
 	
 }
@@ -450,12 +521,7 @@ void Server::handleTopic(std::string cmd, Client &cli)
 
 void Server::handleQuit(std::string cmd, int fd)
 {
-	std::string message = cmd.substr(5);
-	size_t endPos = message.find("\r\n");
-	if (endPos != std::string::npos)
-		message = message.substr(0, endPos);
-	message = trim(message);
-	removeNewlines(message);
+	std::string message = extractCommand(cmd, 5);
 	if (message.empty())
 		message = "Client quit";
 	std::string quitMessage = ":" + getClient(fd).getNick() + " QUIT :" + message + "\r\n";
