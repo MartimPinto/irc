@@ -52,9 +52,9 @@ std::string intToStr(int num)
     return oss.str();
 }
 
-std::string extractCommand(std::string &cmd)
+std::string extractCommand(std::string &cmd, int characters)
 {
-    std::string message = cmd.substr(5);
+    std::string message = cmd.substr(characters);
 	size_t endPos = message.find("\r\n");
     if (endPos != std::string::npos)
         message = message.substr(0, endPos);

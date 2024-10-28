@@ -6,13 +6,13 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:47:43 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/10/28 11:53:35 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/10/28 16:04:16 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Channel.hpp"
 
-Channel::Channel(const std::string &name): _name(name){}
+Channel::Channel(const std::string &name): _name(name), _topicProtected(false){}
 
 Channel::Channel(const Channel &src)
 {
@@ -143,6 +143,26 @@ int Channel::getNumUsers() const
 std::string Channel::getTopic() const
 {
 	return this->_topic;
+}
+
+void Channel::setTopic(const std::string &topic)
+{
+	this->_topic = topic;
+}
+
+void Channel::setTopicProtected(bool protectedTopic)
+{
+	this->_topicProtected = protectedTopic;
+}
+
+bool Channel::hasTopic() const
+{
+	return !_topic.empty();
+}
+
+bool Channel::isTopicProtected()
+{
+	return false;
 }
 
 void Channel::sendAll(std::string msg)
