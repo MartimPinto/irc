@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/13 12:06:14 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/10/28 12:28:16 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/04 15:20:21 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,13 @@ class Server
 			void handleQuit(std::string cmd, int fd);
 			void handleTopic(std::string cmd, Client &cli);
 			void handleKick(std::string cmd, Client &cli);
+			void handleInvite(std::string cmd, Client &cli);
+			void handleMode(std::string cmd, Client &cli);
+			void handleOperatorMode(Client &cli, Channel &chan, std::string param, char flag);
+			void handleTopicMode(Client &cli, Channel &chan, std::string param, char flag);
+			void handleLimitMode(Client &cli, Channel &chan, std::string param, char flag);
+			void handleKeyMode(Client &cli, Channel &chan, std::string param, char flag);
+			void handleInviteOnlyMode(Client &cli, Channel &chan, std::string param, char flag);
 };
 
 #endif

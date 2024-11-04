@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:42:11 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/10/28 16:03:30 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/04 17:12:09 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,14 @@ class Channel
 			std::string _name;
 			std::string _topic;
 			bool _topicProtected;
+			bool _inviteOnly;
+			int _userLimit;
+			std::string _key;
 			std::vector<Client *> _clients;
 			std::vector<Client *> _operators;
+			std::vector<Client *> _invited;
+			std::vector<char> _modes;
+			bool _restricted;
 
 	public:
 			Channel(const std::string &name);
@@ -33,21 +39,41 @@ class Channel
 			void addClient(Client *client);
 			void removeClient(Client *client);
 			void removeClientFd(int fd);
+			void removeUserLimit();
 			std::vector<Client *> &getClients();
 			bool isOperator(Client &client);
 			void addOperator(Client &client);
 			void removeOperatorFd(int fd);
+			void removeOperator(Client *client);
+			void addInvited(Client &client);
+			bool isClientInvited(Client &client);
 			bool isClientInChannel(const Client &client) const;
+			bool isRestricted() const;
 			void broadcastMessage(const std::string &message, int senderFD);
+			void sendAll(std::string msg);
+			void addMode(char mode);
+			void removeMode(char mode);
+			
 			int getNumUsers() const;	
 			Client *getClient(int fd);
 			Client *getOperator(int fd);
-			void sendAll(std::string msg);
+			const std::string &getKey() const;
 			std::string getTopic() const;
+			int getUserLimit() const;
+			
+		
 			void setTopic(const std::string &topic);
-			void setTopicProtected(bool protectedTopic);
+			void setTopicProtected(bool value);
+			void setInviteOnly(bool value);
+			void setKey(const std::string &key);
+			void setUserLimit(int limit);
+			void setRestricted(bool value);
+			
 			bool hasTopic() const;
+			bool hasKey() const;
+			bool hasUserLimit() const;
 			bool isTopicProtected();
+			bool isInviteOnly();
 			
 };
 

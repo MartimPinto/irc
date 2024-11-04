@@ -49,6 +49,11 @@
 #define ERR_NOSUCHNICK(nickname) ("401 " + nickname + " :No such nick/channel" + CRLF)
 #define ERR_CANNOTSENDTOCHAN(nickname, channel) ("404 " + nickname + " :Cannot send to channel" + channel + CRLF)
 #define ERR_CHANOPRIVSNEEDED(channel) ("482 " + channel + " :You're not channel operator" + CRLF)
+#define ERR_UNKNOWNMODE(mode) ("472 " + mode + " :Unknown mode" + CRLF)
+#define ERR_KEYSET(channel) ("467 " + channel + " :Channel key already set" + CRLF)
+#define ERR_BADCHANNELKEY(channel) ("475 " + channel + " :Cannot join channel (+k)" + CRLF)
+#define ERR_INVITEONLYCHAN(channel) ("473 " + channel + " :Cannot join channel (+i)" + CRLF)
+#define ERR_USERONCHANNEL(nickname, channel) ("443 " + nickname + " " + channel + " :is already on channel" + CRLF)
 
 #define RPL_CONNECTED(nickname) (": 001 " + nickname + " : Welcome to the IRC server!" + CRLF)
 #define RPL_LISTSTART(nickname) (": 321 " + nickname + " Channel Users :Topic" + CRLF)
@@ -62,6 +67,8 @@ void removeNewlines(std::string &str);
 void removeSpacesAtStart(std::string &str);
 std::string trim(const std::string& str);
 std::string intToStr(int num);
+int strToInt(const std::string &str);
 std::string extractCommand(std::string &cmd, int characters);
+bool isNumber(const std::string &str);
 
 #endif
