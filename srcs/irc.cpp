@@ -52,6 +52,14 @@ std::string intToStr(int num)
     return oss.str();
 }
 
+int strToInt(const std::string &str)
+{
+    std::istringstream iss(str);
+    int num;
+    iss >> num;
+    return num;
+}
+
 std::string extractCommand(std::string &cmd, int characters)
 {
     std::string message = cmd.substr(characters);
@@ -62,3 +70,14 @@ std::string extractCommand(std::string &cmd, int characters)
 	removeNewlines(message);
     return message;
 }
+
+bool isNumber(const std::string &str)
+{
+    for (size_t i = 0; i < str.length(); i++)
+    {
+        if (!isdigit(str[i]))
+            return false;
+    }
+    return true;
+}
+

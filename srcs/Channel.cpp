@@ -6,13 +6,13 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:47:43 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/10/28 16:04:16 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/04 17:12:30 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Channel.hpp"
 
-Channel::Channel(const std::string &name): _name(name), _topicProtected(false){}
+Channel::Channel(const std::string &name): _name(name), _topicProtected(false), _inviteOnly(false), _restricted(false){}
 
 Channel::Channel(const Channel &src)
 {
@@ -26,6 +26,7 @@ Channel &Channel::operator=(const Channel &src)
 		this->_name = src._name;
 		this->_clients = src._clients;
 		this->_operators = src._operators;
+		this->_topic = src._topic;
 	}
 	return *this;
 }
@@ -34,6 +35,7 @@ Channel::~Channel()
 {
 	this->_clients.clear();
 	this->_operators.clear();
+	this->_invited.clear();
 }
 
 const std::string &Channel::getName() const
@@ -44,6 +46,18 @@ const std::string &Channel::getName() const
 void Channel::addClient(Client *client)
 {
 	this->_clients.push_back(client);
+}
+
+void Channel::addMode(char mode)
+{
+	this->_modes.push_back(mode);
+}
+
+void Channel::removeMode(char mode)
+{
+	std::vector<char>::iterator it = std::find(this->_modes.begin(), this->_modes.end(), mode);
+	if (it != this->_modes.end())
+		this->_modes.erase(it);
 }
 
 void Channel::removeClient(Client *client)
@@ -77,6 +91,18 @@ void Channel::removeOperatorFd(int fd)
 	}
 }
 
+void Channel::removeOperator(Client *client)
+{
+	std::vector<Client *>::iterator it = std::find(this->_operators.begin(), this->_operators.end(), client);
+	if (it != this->_operators.end())
+		this->_operators.erase(it);
+}
+
+void Channel::removeUserLimit()
+{
+	this->_userLimit = 0;
+}
+
 std::vector<Client *> &Channel::getClients()
 {
 	return this->_clients;
@@ -90,9 +116,27 @@ bool Channel::isOperator(Client &client)
 	return false;
 }
 
+bool Channel::isRestricted() const
+{
+	return this->_restricted;
+}
+
+bool Channel::isClientInvited(Client &client)
+{
+	std::vector<Client *>::iterator it = std::find(this->_invited.begin(), this->_invited.end(), &client);
+	if (it != this->_invited.end())
+		return true;
+	return false;
+}
+
 void Channel::addOperator(Client &client)
 {
 	this->_operators.push_back(&client);
+}
+
+void Channel::addInvited(Client &client)
+{
+	this->_invited.push_back(&client);
 }
 
 bool Channel::isClientInChannel(const Client &client) const
@@ -140,9 +184,19 @@ int Channel::getNumUsers() const
 	return this->_clients.size();
 }
 
+int Channel::getUserLimit() const
+{
+	return this->_userLimit;
+}
+
 std::string Channel::getTopic() const
 {
 	return this->_topic;
+}
+
+const std::string &Channel::getKey() const
+{
+	return this->_key;
 }
 
 void Channel::setTopic(const std::string &topic)
@@ -150,9 +204,29 @@ void Channel::setTopic(const std::string &topic)
 	this->_topic = topic;
 }
 
-void Channel::setTopicProtected(bool protectedTopic)
+void Channel::setTopicProtected(bool value)
 {
-	this->_topicProtected = protectedTopic;
+	this->_topicProtected = value;
+}
+
+void Channel::setInviteOnly(bool value)
+{
+	this->_inviteOnly = value;
+}
+
+void Channel::setKey(const std::string &key)
+{
+	this->_key = key;
+}
+
+void Channel::setUserLimit(int limit)
+{
+	this->_userLimit = limit;
+}
+
+void Channel::setRestricted(bool value)
+{
+	this->_restricted = value;
 }
 
 bool Channel::hasTopic() const
@@ -160,9 +234,24 @@ bool Channel::hasTopic() const
 	return !_topic.empty();
 }
 
+bool Channel::hasKey() const
+{
+	return !_key.empty();
+}
+
+bool Channel::hasUserLimit() const
+{
+	return _userLimit > 0;
+}
+
 bool Channel::isTopicProtected()
 {
-	return false;
+	return _topicProtected;
+}
+
+bool Channel::isInviteOnly()
+{
+	return _inviteOnly;
 }
 
 void Channel::sendAll(std::string msg)
