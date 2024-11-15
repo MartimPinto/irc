@@ -81,3 +81,17 @@ bool isNumber(const std::string &str)
     return true;
 }
 
+std::vector<std::string> splitBuffer(std::string buffer)
+{
+    std::vector<std::string> result;
+    std::istringstream iss(buffer);
+    std::string token;
+    while (std::getline(iss, token))
+    {
+        size_t pos = token.find_first_of("\r\n");
+        if (pos != std::string::npos)
+            token = token.substr(0, pos);
+        result.push_back(token);
+    }
+    return result;
+}

@@ -39,6 +39,7 @@
 #define BUFFER_SIZE 1024
 #define ERR_NEEDMOREPARAMS(nickname) (": 461 " + nickname + " :Need more parameters" + CRLF)
 #define ERR_ALREADYREGISTERED(nickname) (": 462 " + nickname + " :Unauthorized command (already registered)" + CRLF)
+#define ERR_NONICKNAMEGIVEN(nickname) (": 431 " + nickname + " :No nickname given" + CRLF)
 #define ERR_NICKNAMEINUSE(nickname) (": 433 " + nickname + " :Nickname is already in use" + CRLF)
 #define ERR_INCORPASS(nickname) (": 464 " + nickname + " :Password incorrect !" + CRLF)
 #define ERR_ERRONEUSNICKNAME(nickname) (": 432 " + nickname + " :Erroneus nickname" + CRLF)
@@ -54,12 +55,14 @@
 #define ERR_BADCHANNELKEY(channel) ("475 " + channel + " :Cannot join channel (+k)" + CRLF)
 #define ERR_INVITEONLYCHAN(channel) ("473 " + channel + " :Cannot join channel (+i)" + CRLF)
 #define ERR_USERONCHANNEL(nickname, channel) ("443 " + nickname + " " + channel + " :is already on channel" + CRLF)
+#define ERR_CHANNELISFULL(channel) ("471 " + channel + " :Cannot join channel (+l)" + CRLF)
 
 #define RPL_CONNECTED(nickname) (": 001 " + nickname + " : Welcome to the IRC server!" + CRLF)
 #define RPL_LISTSTART(nickname) (": 321 " + nickname + " Channel Users :Topic" + CRLF)
 #define RPL_LIST(nickname, channelName, numUsers, topic) (": 322 " + nickname + " " + channelName + " " + numUsers + " :" + topic + CRLF)
 #define RPL_TOPIC(channel, topic) (": 332 " + channel + " :" + topic + CRLF)
 #define RPL_NOTOPIC(channel) (": 331 " + channel + " :No topic is set" + CRLF)
+#define RPL_WELCOME(nickname) (": 001 " + nickname + " :Welcome to the IRC server!" + CRLF)
 
 void log(const std::string &message);
 void exitError(const std::string &error);
@@ -70,5 +73,7 @@ std::string intToStr(int num);
 int strToInt(const std::string &str);
 std::string extractCommand(std::string &cmd, int characters);
 bool isNumber(const std::string &str);
+bool isValidNick(const std::string &nick);
+std::vector<std::string> splitBuffer(std::string buffer);
 
 #endif

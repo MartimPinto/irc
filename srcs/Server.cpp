@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/04 17:12:39 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/15 17:58:36 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@ bool Server::Signal = false;
 
 void Server::sigHandler(int signum)
 {
+	std::cout << "ENTREI NO HANDLER" << std::endl;
 	(void)signum;
 	std::cout << std::endl;
 	log("Signal Recieved!");
@@ -56,9 +57,20 @@ Server &Server::operator=(const Server &src)
 
 int Server::startServer()
 {
-	if ((_socket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0)
+	int opt = 1;
+	if ((_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 	{
 		exitError("Cannot create socket");
+		return 1;
+	}
+	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+	{
+		exitError("Cannot set socket options");
+		return 1;
+	}
+	if (fcntl(_socket, F_SETFL, O_NONBLOCK) < 0)
+	{
+		exitError("Cannot set socket to non-blocking");
 		return 1;
 	}
 	if(bind(_socket, (sockaddr*)&_socketAddress, _socketAddressLen) < 0)
@@ -80,10 +92,12 @@ void Server::startListen()
 	<< _socket << " Connected" <<" ***\n";
 	log(ss.str());
 
-	while (Server::Signal == false)
+	while (1)
 	{
+		if (Server::Signal == true)
+			closeServer();
 		if ((poll(&_fds[0], _fds.size(), -1) == -1) && Server::Signal == false)
-			exitError("Poll failed");
+			exitError("poll() failed");
 		for (size_t i = 0; i < _fds.size(); ++i)
 		{
 			if (_fds[i].revents & POLLIN)
@@ -93,9 +107,8 @@ void Server::startListen()
 				else
 					handleClient(_fds[i].fd);
 			}
-		}	
+		}
 	}
-	this->closeServer();
 }
 
 void Server::handleNewConnection()
@@ -125,6 +138,7 @@ void Server::handleNewConnection()
 
 void Server::handleClient(int client_index)
 {
+	std::vector<std::string> cmd;
 	char buffer[BUFFER_SIZE];
 	memset(buffer, 0, sizeof(buffer));
 	Client &cli = getClient(client_index);
@@ -139,15 +153,23 @@ void Server::handleClient(int client_index)
 	}
 	else
 	{
-		buffer[bytesReceived] = '\0';
+		cli.setBuffer(buffer);
+		if (cli.getBuffer().find_first_of("\r\n") == std::string::npos)
+			return;
 		log("Received message from client");
-		std::string cmd(buffer);
-		parseCommand(cmd, cli, client_index);
+		cmd = splitBuffer(cli.getBuffer());
+		for (size_t i = 0; i < cmd.size(); i++)
+		{
+			parseCommand(cmd[i], cli, client_index);
+		}
+		cli.clearBuffer();
 	}
 }
 
 void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 {
+	if (cmd.empty())
+		return;
 	if (!cli.isAuthenticated())
 	{
 		if (cmd.find("PASS") == 0 || cmd.find("pass") == 0)
@@ -158,13 +180,9 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
             send(client_index, error.c_str(), error.length(), 0);
 		}
 	}
-	else
+	else if (cli.isAuthenticated())
 	{
-		if (cmd.find("QUIT") == 0 || cmd.find("quit") == 0)
-		{
-			handleQuit(cmd, client_index);
-		}
-		else if (cmd.find("NICK") == 0 || cmd.find("nick") == 0)
+		if (cmd.find("NICK") == 0 || cmd.find("nick") == 0)
 		{
 			handleNick(cmd, cli);
 		}
@@ -174,6 +192,8 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 		}
 		else if (cli.isRegistered())
 		{
+			if (cmd.find("QUIT") == 0 || cmd.find("quit") == 0)
+				handleQuit(cmd, client_index);
 			if (cmd.find("JOIN") == 0 || cmd.find("join") == 0)
 				handleJoin(cmd, cli);
 			else if (cmd.find("PART") == 0 || cmd.find("part") == 0)
@@ -206,7 +226,12 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 void Server::handleNick(std::string cmd, Client &cli)
 {
 	std::string nick = extractCommand(cmd, 5);
-	if (nick.empty() || nick.size() > 9 || nick[0] == '#' || nick[0] == '&' || nick[0] == ':')
+	if (nick.empty())
+	{
+		sendResponse(ERR_NONICKNAMEGIVEN(cli.getNick()), cli.getFd());
+		return;
+	}
+	if (isValidNick(nick) == false)
 	{
 		sendResponse(ERR_ERRONEUSNICKNAME(cli.getNick()), cli.getFd());
 		return;
@@ -279,7 +304,6 @@ void Server::handleJoin(std::string cmd, Client &cli)
 	std::istringstream iss(cmd);
     std::string command, channel, password;
     iss >> command >> channel >> password;
-	removeSpacesAtStart(password);
 	if (channel.empty() || channel[0] != '#' || channel.size() > 50)
 	{
 		std::string error = "ERROR: Invalid channel name\r\n";
@@ -302,6 +326,11 @@ void Server::handleJoin(std::string cmd, Client &cli)
 	if (chan.isInviteOnly() && !chan.isClientInvited(cli))
 	{
 		sendResponse(ERR_INVITEONLYCHAN(channel), cli.getFd());
+		return;
+	}
+	if (chan.hasUserLimit() && chan.getNumUsers() >= chan.getUserLimit())
+	{
+		sendResponse(ERR_CHANNELISFULL(channel), cli.getFd());
 		return;
 	}
 	chan.addClient(&cli);

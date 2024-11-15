@@ -6,13 +6,13 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:47:43 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/04 17:12:30 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/15 16:49:43 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Channel.hpp"
 
-Channel::Channel(const std::string &name): _name(name), _topicProtected(false), _inviteOnly(false), _restricted(false){}
+Channel::Channel(const std::string &name): _name(name), _topicProtected(false), _inviteOnly(false), _userLimit(0), _modes('o'), _restricted(false){}
 
 Channel::Channel(const Channel &src)
 {
@@ -27,6 +27,13 @@ Channel &Channel::operator=(const Channel &src)
 		this->_clients = src._clients;
 		this->_operators = src._operators;
 		this->_topic = src._topic;
+		this->_topicProtected = src._topicProtected;
+		this->_inviteOnly = src._inviteOnly;
+		this->_userLimit = src._userLimit;
+		this->_key = src._key;
+		this->_restricted = src._restricted;
+		this->_invited = src._invited;
+		this->_modes = src._modes;
 	}
 	return *this;
 }
@@ -36,6 +43,7 @@ Channel::~Channel()
 	this->_clients.clear();
 	this->_operators.clear();
 	this->_invited.clear();
+	this->_modes.clear();
 }
 
 const std::string &Channel::getName() const
