@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 16:56:24 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/10/28 12:07:28 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/15 16:39:43 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,10 @@ class Client
 			void joinChannel(const std::string &channel);
 			void leaveChannel(const std::string &channel);
 
+			void setBuffer(std::string buffer);
+			std::string getBuffer();
+			void clearBuffer();
+
 	private:
 			int _fd;
 			std::string _ip;
@@ -57,6 +61,7 @@ class Client
 			std::string _realname;
 			std::string _hostname;
 			std::string _servername;
+			std::string _buffer;
 			std::vector<std::string> _channels;
 };
 

@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/31 12:12:24 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/04 17:05:05 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/15 17:37:26 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,8 +30,13 @@ void Server::handleMode(std::string cmd, Client &cli)
 		sendResponse(ERR_NOTONCHANNEL(channelName), cli.getFd());
 		return;
 	}
+	if (mode.empty())
+	{
+		return;
+	}
 	char flag = mode[0];
 	char modeOption = mode[1];
+	std::cout << "Mode: " << mode[1] << std::endl;
 	if (modeOption == 'o')
 		handleOperatorMode(cli, chan, param, flag);
 	else if (modeOption == 't')
