@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/18 14:15:41 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/18 17:00:25 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,7 +116,6 @@ void Server::startListen()
 
 void Server::handleNewConnection()
 {
-	std::cout << "New connection accepted ENTROU" << std::endl;
 	Client cl;
 	struct sockaddr_in claddr;
 	struct pollfd npoll;
@@ -138,7 +137,6 @@ void Server::handleNewConnection()
 	_fds.push_back(npoll);
 
 	log("New connection accepted");
-	std::cout << "New connection accepted SAIU" << std::endl;
 }
 
 void Server::handleClient(int client_index)
@@ -154,20 +152,19 @@ void Server::handleClient(int client_index)
 		clearChannels(client_index);
 		clearClients(client_index);
 		close(client_index);
-		
 	}
 	else
-	{
+	{	
 		cli.setBuffer(buffer);
+		cli.getBuffer().append("\0");
 		if (cli.getBuffer().find_first_of("\r\n") == std::string::npos)
 			return;
 		log("Received message from client");
 		cmd = splitBuffer(cli.getBuffer());
 		for (size_t i = 0; i < cmd.size(); i++)
-		{
 			parseCommand(cmd[i], cli, client_index);
-		}
-		cli.clearBuffer();
+		if (cli.getBuffer().find_first_of("\r\n") != std::string::npos)
+			cli.clearBuffer();
 	}
 }
 
