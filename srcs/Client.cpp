@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 17:12:05 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/18 14:39:38 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/18 16:59:13 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -138,6 +138,8 @@ void Client::leaveChannel(const std::string &channel)
 
 void Client::setBuffer(std::string buffer)
 {
+	if (buffer.empty())
+		return ;
 	_buffer += buffer;
 }
 
@@ -157,5 +159,5 @@ Client::~Client()
     {
         leaveChannel(_channels.front());
     }
-    this->_buffer.clear();
+	this->_buffer.clear();
 }

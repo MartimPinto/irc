@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 14:14:32 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/18 15:07:34 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/18 16:59:28 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,26 +57,20 @@ void Server::closeServer()
 		std::cout << "Client " << _clients[i].getFd() << " disconnected" << std::endl;
 		close(_clients[i].getFd());
 	}
-	
-	/*for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
-		delete &it->second;*/
+	for (size_t i = 0; i < _clients.size(); i++)
+	{
+		_clients.erase(_clients.begin() + i);
+	}
 	_fds.clear();
 	std::vector<pollfd>().swap(_fds);
-	for (size_t i = 0 ; i < _clients.size(); i++)
-	{
-		std::cout << "Client " << _clients[i].getFd() << " ENTROU" << std::endl;
-		delete &_clients[i];
-	}
+	if (!_clients.empty())
+		delete &_clients[0];	
 	if (_clients.empty())
 	{
-		std::cout << "CLIENTS VAZIO" << std::endl;
 		_clients.clear();
 		std::vector<Client>().swap(_clients);
 	}
-	/*_clients.clear();
-	_channels.clear();*/
 	close(_socket);
-	std::cout << "SERVER DISCONNECTED" << std::endl;
 	exit(0);
 }
 
