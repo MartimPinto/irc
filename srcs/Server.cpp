@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/15 17:58:36 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/18 14:15:41 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,14 @@ bool Server::Signal = false;
 
 void Server::sigHandler(int signum)
 {
-	std::cout << "ENTREI NO HANDLER" << std::endl;
-	(void)signum;
 	std::cout << std::endl;
 	log("Signal Recieved!");
-	Server::Signal = true;
+	if (signum == SIGINT)
+	{
+		Server::Signal = true;
+		return ;
+	}
+	
 }
 
 Server::Server(int port, std::string pass): _socket(), _port(port),
@@ -87,15 +90,15 @@ int Server::startServer()
 
 void Server::startListen()
 {
-	std::ostringstream ss;
-	ss << "\n *** Server: " 
-	<< _socket << " Connected" <<" ***\n";
-	log(ss.str());
+	std::cout << "\n *** Server: " 
+	<< _socket << " Connected" <<" ***" << std::endl;
 
 	while (1)
 	{
 		if (Server::Signal == true)
+		{
 			closeServer();
+		}
 		if ((poll(&_fds[0], _fds.size(), -1) == -1) && Server::Signal == false)
 			exitError("poll() failed");
 		for (size_t i = 0; i < _fds.size(); ++i)
@@ -113,6 +116,7 @@ void Server::startListen()
 
 void Server::handleNewConnection()
 {
+	std::cout << "New connection accepted ENTROU" << std::endl;
 	Client cl;
 	struct sockaddr_in claddr;
 	struct pollfd npoll;
@@ -132,8 +136,9 @@ void Server::handleNewConnection()
 	cl.setIp(inet_ntoa(claddr.sin_addr));
 	_clients.push_back(cl);
 	_fds.push_back(npoll);
-		
+
 	log("New connection accepted");
+	std::cout << "New connection accepted SAIU" << std::endl;
 }
 
 void Server::handleClient(int client_index)
@@ -601,36 +606,54 @@ void Server::handleInvite(std::string cmd, Client &cli)
 
 void Server::handleQuit(std::string cmd, int fd)
 {
-	std::string message = extractCommand(cmd, 5);
-	if (message.empty())
-		message = "Client quit";
-	std::string quitMessage = ":" + getClient(fd).getNick() + " QUIT :" + message + "\r\n";
-	std::vector<std::string> channels = getClient(fd).getChannels();
-	for (size_t i = 0; i < channels.size(); ++i)
-	{
-		std::map<std::string, Channel>::iterator it = _channels.find(channels[i]);
-		if (it != _channels.end())
-		{
-			Channel &chan = it->second;
-			chan.removeClient(&getClient(fd));
-			std::vector<Client *> clientsInChannel = chan.getClients();
-			for (size_t j = 0; j < clientsInChannel.size(); ++j)
-			{
-				send(clientsInChannel[j]->getFd(), quitMessage.c_str(), quitMessage.length(), 0);
-			}
-			if (chan.getClients().empty())
-			{
-				_channels.erase(it);
-				log("Channel " + channels[i] + " has been deleted");
-			}
-		}
-	}
-	std::string quitMsg = "Client " + getClient(fd).getNick() + " has quit\r\n";
-	log(quitMsg);
-	clearChannels(fd);
-	clearClients(fd);
-	close(fd);
+    std::string message = extractCommand(cmd, 5);
+    if (message.empty())
+        message = "Client quit";
+
+    std::string quitMessage = ":" + getClient(fd).getNick() + " QUIT :" + message + "\r\n";
+
+    std::vector<std::string> channels = getClient(fd).getChannels();
+    std::vector<std::string> emptyChannels;
+
+    for (size_t i = 0; i < channels.size(); ++i)
+    {
+        std::map<std::string, Channel>::iterator it = _channels.find(channels[i]);
+        if (it != _channels.end())
+        {
+            Channel &chan = it->second;
+            chan.removeClient(&getClient(fd));
+
+            // Notify remaining clients
+            std::vector<Client *> clientsInChannel = chan.getClients();
+            for (size_t j = 0; j < clientsInChannel.size(); ++j)
+            {
+                send(clientsInChannel[j]->getFd(), quitMessage.c_str(), quitMessage.length(), 0);
+            }
+
+            if (chan.getClients().empty())
+            {
+                emptyChannels.push_back(channels[i]);  // Mark empty channels for deletion
+            }
+        }
+    }
+
+    // Delete empty channels after the loop
+    for (size_t i = 0; i < emptyChannels.size(); ++i)
+    {
+        _channels.erase(emptyChannels[i]);
+        log("Channel " + emptyChannels[i] + " has been deleted");
+    }
+
+    // Log client quit
+    log("Client " + getClient(fd).getNick() + " has quit");
+
+    // Clear client resources and close connection
+	emptyChannels.clear();
+    clearChannels(fd);
+    clearClients(fd);
+    close(fd);
 }
+
 
 Client &Server::getClient(int fd)
 {

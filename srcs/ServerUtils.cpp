@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 14:14:32 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/15 18:03:19 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/18 15:07:34 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,18 +52,31 @@ void Server::verifyPassword(std::string cmd, Client &cli, int client_index)
 
 void Server::closeServer()
 {
-	std::cout << "Closing server ENTREI" << std::endl;
 	for (size_t i = 0; i < _clients.size(); i++)
 	{
 		std::cout << "Client " << _clients[i].getFd() << " disconnected" << std::endl;
 		close(_clients[i].getFd());
 	}
-	if (_socket != -1)
-		close(_socket);
-	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
-		delete &it->second;
-	_clients.clear();
-	_channels.clear();
+	
+	/*for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+		delete &it->second;*/
+	_fds.clear();
+	std::vector<pollfd>().swap(_fds);
+	for (size_t i = 0 ; i < _clients.size(); i++)
+	{
+		std::cout << "Client " << _clients[i].getFd() << " ENTROU" << std::endl;
+		delete &_clients[i];
+	}
+	if (_clients.empty())
+	{
+		std::cout << "CLIENTS VAZIO" << std::endl;
+		_clients.clear();
+		std::vector<Client>().swap(_clients);
+	}
+	/*_clients.clear();
+	_channels.clear();*/
+	close(_socket);
+	std::cout << "SERVER DISCONNECTED" << std::endl;
 	exit(0);
 }
 

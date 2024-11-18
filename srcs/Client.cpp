@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 17:12:05 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/15 16:40:00 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/18 14:39:38 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,7 +131,9 @@ void Client::leaveChannel(const std::string &channel)
 {
 	std::vector<std::string>::iterator it = std::find(_channels.begin(), _channels.end(), channel);
 	if (it != _channels.end())
+	{
 		_channels.erase(it);
+	}
 }
 
 void Client::setBuffer(std::string buffer)
@@ -151,9 +153,9 @@ void Client::clearBuffer()
 
 Client::~Client()
 {
-	for(std::vector<std::string>::iterator it = _channels.begin(); it != _channels.end(); it++)
-	{
-		leaveChannel(*it);
-	}
-	this->_buffer.clear();
+    while (!_channels.empty())
+    {
+        leaveChannel(_channels.front());
+    }
+    this->_buffer.clear();
 }
