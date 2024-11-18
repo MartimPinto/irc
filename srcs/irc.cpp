@@ -62,6 +62,8 @@ int strToInt(const std::string &str)
 
 std::string extractCommand(std::string &cmd, int characters)
 {
+    if (characters >= int(cmd.size()))
+        return "";
     std::string message = cmd.substr(characters);
 	size_t endPos = message.find("\r\n");
     if (endPos != std::string::npos)
