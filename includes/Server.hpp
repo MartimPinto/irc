@@ -22,6 +22,8 @@ class Channel;
 #include "Client.hpp"
 #include "Channel.hpp"
 
+const std::string SERVER_NAME = "irc.myserver.com";
+
 class Server
 {
 	public:
@@ -36,6 +38,7 @@ class Server
 			Client &getClient(int fd);
 			Client *getClientNick(const std::string &nick);
 			void printChannelNames() const;
+
 	
 	private:
 			std::string m_ip_address;

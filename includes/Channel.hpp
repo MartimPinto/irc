@@ -53,6 +53,7 @@ class Channel
 			void sendAll(std::string msg);
 			void addMode(char mode);
 			void removeMode(char mode);
+			std::string getNamesList() const;
 			
 			int getNumUsers() const;	
 			Client *getClient(int fd);
