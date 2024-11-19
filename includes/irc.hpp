@@ -57,12 +57,16 @@
 #define ERR_USERONCHANNEL(nickname, channel) ("443 " + nickname + " " + channel + " :is already on channel" + CRLF)
 #define ERR_CHANNELISFULL(channel) ("471 " + channel + " :Cannot join channel (+l)" + CRLF)
 
-#define RPL_CONNECTED(nickname) (": 001 " + nickname + " : Welcome to the IRC server!" + CRLF)
+#define RPL_WELCOME(nickname) (": 001 " + nickname + " :Welcome to the IRC server!" + CRLF)
+#define RPL_YOURHOST(nickname) (": 002 : Your host is " + nickname + ", running version 1.0" + CRLF)
+#define RPL_CREATED(nick, date) (": 003 " + nick + ": This server was created " + date + CRLF)
+#define RPL_MYINFO(nickname) (": 004 " + nickname + " :Server 1.0" + CRLF)
+#define RPL_ISUPPORT(nickname) (": 005 " + nickname + " :are supported by this server" + CRLF)
 #define RPL_LISTSTART(nickname) (": 321 " + nickname + " Channel Users :Topic" + CRLF)
 #define RPL_LIST(nickname, channelName, numUsers, topic) (": 322 " + nickname + " " + channelName + " " + numUsers + " :" + topic + CRLF)
 #define RPL_TOPIC(channel, topic) (": 332 " + channel + " :" + topic + CRLF)
 #define RPL_NOTOPIC(channel) (": 331 " + channel + " :No topic is set" + CRLF)
-#define RPL_WELCOME(nickname) (": 001 " + nickname + " :Welcome to the IRC server!" + CRLF)
+
 
 void log(const std::string &message);
 void exitError(const std::string &error);

@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/13 12:06:14 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/18 14:48:31 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/19 15:17:21 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ class Server
 			int	_socket;
 			int _port;
 			int _newSocket;
+			std::string _hostname;
 			struct sockaddr_in _socketAddress;
 			unsigned int _socketAddressLen;
 			std::string _password;
@@ -50,9 +51,12 @@ class Server
 			std::vector<Client> _clients;
 			static bool Signal;
 			std::map<std::string, Channel> _channels;
+			std::string _startTime;
 			
 
 			int startServer();
+			std::string getStartTime();
+			void setStartTime();
 			void sendResponse(std::string response, int client_index);
 			void handleNewConnection();
 			void handleClient(int client_index);
