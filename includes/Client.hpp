@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 16:56:24 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/15 16:39:43 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/19 15:15:38 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ class Client
 			void setNick(std::string nickname);
 			std::string getUsername();
 			void setUsername(std::string username);
+			std::string getUser();
 			bool isRegistered();
 			bool isOperator();
 			void registerClient();

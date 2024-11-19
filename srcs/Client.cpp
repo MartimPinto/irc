@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 17:12:05 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/18 16:59:13 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/19 13:06:21 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,11 @@ void Client::setUsername(std::string username)
 		return ;
 	else
 		_username = username;
+}
+
+std::string Client::getUser()
+{
+	return this->_username;
 }
 
 bool Client::isRegistered()

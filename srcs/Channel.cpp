@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:47:43 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/15 16:49:43 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/19 13:06:01 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ const std::string &Channel::getName() const
 {
 	return this->_name;
 }
+
 
 void Channel::addClient(Client *client)
 {

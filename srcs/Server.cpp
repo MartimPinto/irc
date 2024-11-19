@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/18 17:00:25 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/19 15:25:21 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ _newSocket(), _socketAddress(), _socketAddressLen(sizeof(_socketAddress)), _pass
 	_socketAddress.sin_family = AF_INET;
 	_socketAddress.sin_port = htons(_port);
 	_socketAddress.sin_addr.s_addr = INADDR_ANY;
+	this->_hostname = inet_ntoa(_socketAddress.sin_addr);
 	memset(_socketAddress.sin_zero, 0, sizeof(_socketAddress.sin_zero));
 	if (startServer() == 0)
 	{
@@ -170,12 +171,18 @@ void Server::handleClient(int client_index)
 
 void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 {
+	std::cout << "CMD: " << cmd << std::endl;
 	if (cmd.empty())
 		return;
 	if (!cli.isAuthenticated())
 	{
 		if (cmd.find("PASS") == 0 || cmd.find("pass") == 0)
 			verifyPassword(cmd, cli, client_index);
+		else if (cmd.find("CAP LS") == 0)
+		{
+			std::string response = "CAP * LS :multi-prefix\r\n";
+			send(client_index, response.c_str(), response.length(), 0);
+		}
 		else
 		{
 			std::string error = "ERROR: Use PASS command and type password to authenticate client\r\n";
@@ -194,9 +201,16 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 		}
 		else if (cli.isRegistered())
 		{
+			if (cmd.find("PING") == 0)
+			{				
+				std::string token = extractCommand(cmd, 5);
+				std::string response = "PONG " + token + "\r\n";
+				send(client_index, response.c_str(), response.length(), 0);
+				return ;
+			}
 			if (cmd.find("QUIT") == 0 || cmd.find("quit") == 0)
 				handleQuit(cmd, client_index);
-			if (cmd.find("JOIN") == 0 || cmd.find("join") == 0)
+			else if (cmd.find("JOIN") == 0 || cmd.find("join") == 0)
 				handleJoin(cmd, cli);
 			else if (cmd.find("PART") == 0 || cmd.find("part") == 0)
 				handlePart(cmd, cli);
@@ -297,12 +311,17 @@ void Server::handleUser(std::string cmd, Client &cli)
 	log("Client with nickname " + cli.getNick() + " registered with username " + cli.getUsername());
 	if (!cli.getNick().empty() && cli.isRegistered())
 	{
-		sendResponse(RPL_CONNECTED(cli.getNick()), cli.getFd());
+		sendResponse(RPL_WELCOME(cli.getNick()), cli.getFd());
+		sendResponse(RPL_YOURHOST(cli.getNick()), cli.getFd());
+		sendResponse(RPL_CREATED(cli.getNick(), this->getStartTime()), cli.getFd());
+		sendResponse(RPL_MYINFO(cli.getNick()), cli.getFd());
+		sendResponse(RPL_ISUPPORT(cli.getNick()), cli.getFd());
 	}
 }
 
 void Server::handleJoin(std::string cmd, Client &cli)
 {
+	std::cout << "ENTROU NA JOIN" << std::endl;
 	std::istringstream iss(cmd);
     std::string command, channel, password;
     iss >> command >> channel >> password;
@@ -316,22 +335,26 @@ void Server::handleJoin(std::string cmd, Client &cli)
     Channel &chan = result.first->second;
     if (result.second) 
 	{
+		std::cout << "ENTROU CREATE" << std::endl;
         chan.addOperator(cli);
 		cli.setOperator();
         log("Created new channel: " + channel);
     }
 	if (chan.hasKey() && chan.getKey() != password)
 	{
+		std::cout << "ENTROU KEY" << std::endl;
 		sendResponse(ERR_BADCHANNELKEY(channel), cli.getFd());
 		return;
 	}
 	if (chan.isInviteOnly() && !chan.isClientInvited(cli))
 	{
+		std::cout << "ENTROU INVITE" << std::endl;
 		sendResponse(ERR_INVITEONLYCHAN(channel), cli.getFd());
 		return;
 	}
 	if (chan.hasUserLimit() && chan.getNumUsers() >= chan.getUserLimit())
 	{
+		std::cout << "ENTROU LIMIT" << std::endl;
 		sendResponse(ERR_CHANNELISFULL(channel), cli.getFd());
 		return;
 	}
@@ -356,7 +379,13 @@ void Server::handleJoin(std::string cmd, Client &cli)
 
 void Server::handlePart(std::string cmd, Client &cli)
 {
-	std::string channel = extractCommand(cmd, 5);
+	std::istringstream iss(cmd);
+	std::string command, channel, reason;
+	iss >> command >> channel;
+	std::getline(iss, reason);
+	removeSpacesAtStart(reason);
+	if (!reason.empty() && reason[0] == ':')
+		reason = reason.substr(1);
 	if (channel.empty() || channel[0] != '#' || channel.size() > 50)
 	{
 		sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
@@ -376,7 +405,11 @@ void Server::handlePart(std::string cmd, Client &cli)
 	}
 	chan.removeClient(&cli);
 	cli.leaveChannel(channel);
-	std::string partMsg = ":" + cli.getNick() + " PART " + channel + "\r\n";
+	std::string partMsg = ":" + cli.getNick() + "!" + cli.getUser() + "@localhost PART " + channel;
+	if (!reason.empty())
+		partMsg += " :" + reason + "\r\n";
+	else
+		partMsg += "\r\n";
 	std::vector<Client *> clientsInChannel = chan.getClients();
 	for (size_t i = 0; i < clientsInChannel.size(); ++i)
 	{
@@ -671,6 +704,22 @@ Client *Server::getClientNick(const std::string &nick)
 			return &_clients[i];
 	}
 	return NULL;
+}
+
+void Server::setStartTime()
+{
+	time_t rawtime;
+	struct tm *timeinfo;
+	char buffer[80];
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
+	this->_startTime = buffer;
+}
+
+std::string Server::getStartTime()
+{
+	return this->_startTime;
 }
 
 Server::~Server()
