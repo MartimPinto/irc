@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:42:11 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/15 13:32:32 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/25 14:53:42 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ class Channel
 			void sendAll(std::string msg);
 			void addMode(char mode);
 			void removeMode(char mode);
+			void deleteOperators();
 			std::string getNamesList() const;
 			
 			int getNumUsers() const;	

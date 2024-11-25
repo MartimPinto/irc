@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 16:56:24 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/25 14:02:42 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/25 16:17:32 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ class Client
 			void leaveChannel(const std::string &channel);
 
 			void setBuffer(std::string buffer);
-			void setModes(std::string modes);
+			void setModes(std::string mode);
 			std::string getBuffer();
 			std::string getModes();
 			void clearBuffer();
@@ -65,7 +65,7 @@ class Client
 			std::string _hostname;
 			std::string _servername;
 			std::string _buffer;
-			std::string _modes;
+			std::string _mode;
 			std::vector<std::string> _channels;
 };
 
