@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/25 16:15:05 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/25 16:57:44 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -219,11 +219,11 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 				handlePrivMSG(cmd, cli);
 			else if (cmd.find("LIST") == 0 || cmd.find("list") == 0)
 				handleList(cli);
-			else if (cmd.find("TOPIC") == 0 || cmd.find("topic") == 0)
-				handleTopic(cmd, cli);
 			else if (cli.isOperator())
 			{
-				if (cmd.find("KICK") == 0 || cmd.find("kick") == 0)
+				if (cmd.find("TOPIC") == 0 || cmd.find("topic") == 0)
+					handleTopic(cmd, cli);
+				else if (cmd.find("KICK") == 0 || cmd.find("kick") == 0)
 					handleKick(cmd, cli);
 				else if (cmd.find("MODE") == 0 || cmd.find("mode") == 0)
 					handleMode(cmd, cli);
@@ -562,10 +562,10 @@ void Server::handleTopic(std::string cmd, Client &cli)
 	}
 	if (!topic.empty())
 	{
-		if (chan.isTopicProtected() && !chan.isOperator(cli))
+		if (chan.isTopicProtected())
 		{
 			sendResponse(ERR_CHANOPRIVSNEEDED(channel), cli.getFd());
-			return;
+			return ;
 		}
 		chan.setTopic(topic);
 		std::string topicMsg = ":" + cli.getNick() + " TOPIC " + channel + " :" + topic + CRLF;
@@ -745,12 +745,13 @@ void Server::handlePart(std::string cmd, Client &cli)
 	if (chan.isOperator(cli))
 	{
 
-    	chan.removeOperator(&cli);
+    	//chan.removeOperator(&cli);
     	std::vector<Client *> clients = chan.returnClients();
     	if (!clients.empty())
     	{
         	Client &nextClient = *clients[0]; // Now clients[0] is the next client in line
         	chan.addOperator(nextClient);
+			nextClient.setOperator();
 			std::string response = ":" + SERVER_NAME + " MODE " + channel + " +o " + nextClient.getNick() + "\r\n";
         	send(nextClient.getFd(), response.c_str(), response.length(), 0);
     	}

@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/31 12:12:24 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/15 17:37:26 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/25 16:36:21 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,7 @@ void Server::handleOperatorMode(Client &cli, Channel &chan, std::string param, c
 				return;
 			}
 			chan.addOperator(*target);
+			target->setOperator();
 			std::string opMsg = ":" + cli.getNick() + " MODE " + chan.getName() + " +o " + target->getNick() + CRLF;
 			chan.broadcastMessage(opMsg, cli.getFd());
 		}
