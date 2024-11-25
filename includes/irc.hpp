@@ -58,15 +58,22 @@
 #define ERR_CHANNELISFULL(channel) ("471 " + channel + " :Cannot join channel (+l)" + CRLF)
 
 #define RPL_WELCOME(nickname) (": 001 " + nickname + " :Welcome to the IRC server!" + CRLF)
-#define RPL_YOURHOST(nickname) (": 002 : Your host is " + nickname + ", running version 1.0" + CRLF)
+#define RPL_YOURHOST(nickname) (":" + SERVER_NAME + " 002 " + nickname + " :Your host is " + SERVER_NAME + ", running version 1.0" + CRLF)
 #define RPL_CREATED(nick, date) (": 003 " + nick + ": This server was created " + date + CRLF)
-#define RPL_MYINFO(nickname) (": 004 " + nickname + " :Server 1.0" + CRLF)
-#define RPL_ISUPPORT(nickname) (": 005 " + nickname + " :are supported by this server" + CRLF)
+#define RPL_MYINFO(nickname) (": 004 " + SERVER_NAME + " :Server 1.0 ao mtik" + CRLF)
+#define RPL_ISUPPORT(nickname) (":" + SERVER_NAME+ " 005"  + nickname + "CHANTYPES=# PREFIX=(ov)@+ NETWORK=ExampleIRC CASEMAPPING=rfc1459 " + ":are supported by this server" + CRLF)
 #define RPL_LISTSTART(nickname) (": 321 " + nickname + " Channel Users :Topic" + CRLF)
 #define RPL_LIST(nickname, channelName, numUsers, topic) (": 322 " + nickname + " " + channelName + " " + numUsers + " :" + topic + CRLF)
 #define RPL_TOPIC(channel, topic) (": 332 " + channel + " :" + topic + CRLF)
 #define RPL_NOTOPIC(channel) (": 331 " + channel + " :No topic is set" + CRLF)
-
+#define RPL_LUSERCLIENT(nickname, numClients) (": 251 " + nickname + " :There are " + intToStr(numClients) + " users connected" + CRLF)
+#define RPL_LUSEROP(nickname, numOperators) (": 252 " + nickname + " :There are " + intToStr(numOperators) + " operator(s) online" + CRLF)
+#define RPL_LUSERCHANNELS(nickname, numChannels) (": 254 " + nickname + " :There are " + intToStr(numChannels) + " channels formed" + CRLF)
+#define RPL_LUSERME(nickname) (": 255 " + nickname + " :I have " + intToStr(numClients) + " connected" + CRLF)
+#define RPL_MOTDSTART(nickname) (":" + SERVER_NAME + " 375 " + nickname + " :- Message of the Day -" + CRLF)
+#define RPL_MOTD(nickname) (":" + SERVER_NAME + " 372 " + nickname + " :- " + "Welcome and enjoy your stay!" + CRLF)
+#define RPL_ENDOFMOTD(nickname) (":" + SERVER_NAME + " 376 " + nickname + " :End of MOTD command." + CRLF)
+#define RPL_UMODEIS(nickname, modes) (": 221 " + nickname + " " + modes + " :are your current mode" + CRLF)
 
 void log(const std::string &message);
 void exitError(const std::string &error);

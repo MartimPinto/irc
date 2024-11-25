@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/19 15:25:21 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/25 14:36:39 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -202,10 +202,11 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 		else if (cli.isRegistered())
 		{
 			if (cmd.find("PING") == 0)
-			{				
+			{
 				std::string token = extractCommand(cmd, 5);
-				std::string response = "PONG " + token + "\r\n";
+				std::string response = ":" + this->_hostname + " PONG :" + token + "\r\n";
 				send(client_index, response.c_str(), response.length(), 0);
+				log("PONG response sent to " + cli.getNick() + ": " + token);
 				return ;
 			}
 			if (cmd.find("QUIT") == 0 || cmd.find("quit") == 0)
@@ -316,7 +317,26 @@ void Server::handleUser(std::string cmd, Client &cli)
 		sendResponse(RPL_CREATED(cli.getNick(), this->getStartTime()), cli.getFd());
 		sendResponse(RPL_MYINFO(cli.getNick()), cli.getFd());
 		sendResponse(RPL_ISUPPORT(cli.getNick()), cli.getFd());
+		handleLuser(cli);
+		
 	}
+}
+
+void Server::handleLuser(Client &cli)
+{
+	int numClients = _clients.size();
+	int numChannels = _channels.size();
+	int numOperators = _channels.size();
+	
+	sendResponse(RPL_LUSERCLIENT(cli.getNick(), numClients), cli.getFd());
+	sendResponse(RPL_LUSEROP(cli.getNick(), numOperators), cli.getFd());
+	sendResponse(RPL_LUSERCHANNELS(cli.getNick(), numChannels), cli.getFd());
+	sendResponse(RPL_LUSERME(cli.getNick()), cli.getFd());
+	sendResponse(RPL_MOTDSTART(cli.getNick()), cli.getFd());
+	sendResponse(RPL_MOTD(cli.getNick()), cli.getFd());
+	sendResponse(RPL_ENDOFMOTD(cli.getNick()), cli.getFd());
+	cli.setModes("+i");
+	sendResponse(RPL_UMODEIS(cli.getNick(), cli.getModes()), cli.getFd());
 }
 
 void Server::handleJoin(std::string cmd, Client &cli)
@@ -719,35 +739,32 @@ void Server::handlePart(std::string cmd, Client &cli)
     }
 
 	Channel &chan = it->second;
-
     // Remover o cliente do canal
+    chan.removeClient(&cli);  // Passando ponteiro de 'cli' corretamente
+    cli.leaveChannel(channel);
 	if (chan.isOperator(cli))
 	{
-		for (size_t i = 0; i < chan.returnClients().size(); ++i)
-		{
-			if (chan.returnClients()[i] == &cli)
-			{
-				if (i + 1 < chan.returnClients().size())
-				{
-					std::cout << "MUDEI OPERADOR" << std::endl;
-					Client &nextClient = *chan.returnClients()[i + 1];
-					chan.addOperator(nextClient);
-				}
-				break;
-			}
-		}
+
+    	chan.removeOperator(&cli);
+    	std::vector<Client *> clients = chan.returnClients();
+    	if (!clients.empty())
+    	{
+        	Client &nextClient = *clients[0]; // Now clients[0] is the next client in line
+        	chan.addOperator(nextClient);
+			std::string response = ":" + SERVER_NAME + " MODE " + channel + " +o " + nextClient.getNick() + "\r\n";
+        	send(nextClient.getFd(), response.c_str(), response.length(), 0);
+    	}
 	}
-    it->second.removeClient(&cli);  // Passando ponteiro de 'cli' corretamente
-    cli.leaveChannel(channel);
 
     // Mensagem de PART para o cliente que saiu
-    std::string partMessage = ":" + cli.getNick() + "!" + cli.getUser() + "@localhost PART " + channel;
+   	std::string partMessage = ":" + cli.getNick() + "!" + cli.getUser() + "@localhost PART " + channel;
 	if (!reason.empty())
 		partMessage += " :" + reason + "\r\n";
 	else
 		partMessage += "\r\n";
-    //send(cli.getFd(), partMessage.c_str(), partMessage.length(), 0);  // Enviar ao cliente que partiu
-
+    send(cli.getFd(), partMessage.c_str(), partMessage.length(), 0);  // Enviar ao cliente que partiu
+	/*std::string confirmation = ":" + cli.getNick() + "!" + cli.getUser() + "@localhost PART " + channel + "\r\n";
+	send(cli.getFd(), confirmation.c_str(), confirmation.length(), 0);*/
     // Enviar a mensagem de PART para todos os outros clientes no canal
     std::vector<Client *> clientsInChannel = it->second.getClients();
     for (size_t i = 0; i < clientsInChannel.size(); ++i)
