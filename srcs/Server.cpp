@@ -321,106 +321,79 @@ void Server::handleUser(std::string cmd, Client &cli)
 
 void Server::handleJoin(std::string cmd, Client &cli)
 {
-	std::cout << "ENTROU NA JOIN" << std::endl;
-	std::istringstream iss(cmd);
+    std::cout << "ENTROU NA JOIN" << std::endl;
+    std::istringstream iss(cmd);
     std::string command, channel, password;
     iss >> command >> channel >> password;
-	if (channel.empty() || channel[0] != '#' || channel.size() > 50)
-	{
-		std::string error = "ERROR: Invalid channel name\r\n";
-		send(cli.getFd(), error.c_str(), error.length(), 0);
-		return;
-	}
-	std::pair<std::map<std::string, Channel>::iterator, bool> result = _channels.insert(std::make_pair(channel, Channel(channel)));
+
+    if (channel.empty() || channel[0] != '#' || channel.size() > 50)
+    {
+        std::string error = "ERROR: Invalid channel name\r\n";
+        send(cli.getFd(), error.c_str(), error.length(), 0);
+        return;
+    }
+
+    std::pair<std::map<std::string, Channel>::iterator, bool> result = 
+        _channels.insert(std::make_pair(channel, Channel(channel)));
     Channel &chan = result.first->second;
+
     if (result.second) 
-	{
-		std::cout << "ENTROU CREATE" << std::endl;
+    {
+        std::cout << "ENTROU CREATE" << std::endl;
         chan.addOperator(cli);
-		cli.setOperator();
+        cli.setOperator();
         log("Created new channel: " + channel);
     }
-	if (chan.hasKey() && chan.getKey() != password)
-	{
-		std::cout << "ENTROU KEY" << std::endl;
-		sendResponse(ERR_BADCHANNELKEY(channel), cli.getFd());
-		return;
-	}
-	if (chan.isInviteOnly() && !chan.isClientInvited(cli))
-	{
-		std::cout << "ENTROU INVITE" << std::endl;
-		sendResponse(ERR_INVITEONLYCHAN(channel), cli.getFd());
-		return;
-	}
-	if (chan.hasUserLimit() && chan.getNumUsers() >= chan.getUserLimit())
-	{
-		std::cout << "ENTROU LIMIT" << std::endl;
-		sendResponse(ERR_CHANNELISFULL(channel), cli.getFd());
-		return;
-	}
-	chan.addClient(&cli);
-	cli.joinChannel(channel);
-	
+
+    if (chan.hasKey() && chan.getKey() != password)
+    {
+        std::cout << "ENTROU KEY" << std::endl;
+        sendResponse(ERR_BADCHANNELKEY(channel), cli.getFd());
+        return;
+    }
+
+    if (chan.isInviteOnly() && !chan.isClientInvited(cli))
+    {
+        std::cout << "ENTROU INVITE" << std::endl;
+        sendResponse(ERR_INVITEONLYCHAN(channel), cli.getFd());
+        return;
+    }
+
+    if (chan.hasUserLimit() && chan.getNumUsers() >= chan.getUserLimit())
+    {
+        std::cout << "ENTROU LIMIT" << std::endl;
+        sendResponse(ERR_CHANNELISFULL(channel), cli.getFd());
+        return;
+    }
+
+    chan.addClient(&cli);        // Adiciona o cliente ao canal
+    cli.joinChannel(channel);    // Marca o cliente como parte do canal
+
+    // Notifica o cliente que entrou
     std::string welcomeMessage = ":" + cli.getNick() + " JOIN " + channel + "\r\n";
     send(cli.getFd(), welcomeMessage.c_str(), welcomeMessage.length(), 0);
 
+    // Notifica os outros clientes no canal
     std::vector<Client *> clientsInChannel = chan.getClients();
     for (size_t i = 0; i < clientsInChannel.size(); ++i) 
-	{
+    {
         if (clientsInChannel[i]->getFd() != cli.getFd()) 
-		{
-            std::string joinMsg = ":" + cli.getNick() + " has joined " + channel + "\r\n";
+        {
+            // Envia a mensagem de entrada do novo cliente
+            std::string joinMsg = ":" + cli.getNick() + " JOIN " + channel + "\r\n";
             send(clientsInChannel[i]->getFd(), joinMsg.c_str(), joinMsg.length(), 0);
         }
     }
-	log(cli.getNick() + " joined channel: " + channel);
-}
 
+    log(cli.getNick() + " joined channel: " + channel);
 
-void Server::handlePart(std::string cmd, Client &cli)
-{
-	std::istringstream iss(cmd);
-	std::string command, channel, reason;
-	iss >> command >> channel;
-	std::getline(iss, reason);
-	removeSpacesAtStart(reason);
-	if (!reason.empty() && reason[0] == ':')
-		reason = reason.substr(1);
-	if (channel.empty() || channel[0] != '#' || channel.size() > 50)
-	{
-		sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
-		return;
-	}
-	std::map<std::string, Channel>::iterator it = _channels.find(channel);
-	if (it == _channels.end())
-	{
-		sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
-		return;
-	}
-	Channel &chan = it->second;
-	if (std::find(chan.getClients().begin(), chan.getClients().end(), &cli) == chan.getClients().end())
-	{
-		sendResponse(ERR_NOTONCHANNEL(channel), cli.getFd());
-		return;
-	}
-	chan.removeClient(&cli);
-	cli.leaveChannel(channel);
-	std::string partMsg = ":" + cli.getNick() + "!" + cli.getUser() + "@localhost PART " + channel;
-	if (!reason.empty())
-		partMsg += " :" + reason + "\r\n";
-	else
-		partMsg += "\r\n";
-	std::vector<Client *> clientsInChannel = chan.getClients();
-	for (size_t i = 0; i < clientsInChannel.size(); ++i)
-	{
-		send(clientsInChannel[i]->getFd(), partMsg.c_str(), partMsg.length(), 0);
-	}
-	log(cli.getNick() + " left channel: " + channel);
-	if (chan.getClients().empty())
-	{
-		_channels.erase(it);
-		log("Channel " + channel + " has been deleted");
-	}
+    // Adiciona a resposta NAMES para o novo cliente
+    std::string namesList = chan.getNamesList();
+    std::string namesResponse = ":" + SERVER_NAME + " 353 " + cli.getNick() +
+                                 " = " + channel + " :" + namesList + "\r\n";
+    namesResponse += ":" + SERVER_NAME + " 366 " + cli.getNick() +
+                     " " + channel + " :End of /NAMES list.\r\n";
+    send(cli.getFd(), namesResponse.c_str(), namesResponse.length(), 0);
 }
 
 void Server::handlePrivMSG(std::string cmd, Client &cli)
@@ -721,6 +694,82 @@ std::string Server::getStartTime()
 {
 	return this->_startTime;
 }
+
+void Server::handlePart(std::string cmd, Client &cli)
+{
+    std::istringstream iss(cmd);
+    std::string command, channel, reason;
+    iss >> command >> channel;
+	std::getline(iss, reason);
+	removeSpacesAtStart(reason);
+	if (!reason.empty() && reason[0] == ':')
+		reason = reason.substr(1);
+    if (channel.empty() || channel[0] != '#')
+    {
+        sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
+        return;
+    }
+
+    // Verificar se o canal existe e se o cliente está no canal
+    std::map<std::string, Channel>::iterator it = _channels.find(channel);
+    if (it == _channels.end() || !it->second.isClientInChannel(cli))
+    {
+        sendResponse(ERR_NOTONCHANNEL(channel), cli.getFd());
+        return;
+    }
+
+	Channel &chan = it->second;
+
+    // Remover o cliente do canal
+	if (chan.isOperator(cli))
+	{
+		for (size_t i = 0; i < chan.returnClients().size(); ++i)
+		{
+			if (chan.returnClients()[i] == &cli)
+			{
+				if (i + 1 < chan.returnClients().size())
+				{
+					std::cout << "MUDEI OPERADOR" << std::endl;
+					Client &nextClient = *chan.returnClients()[i + 1];
+					chan.addOperator(nextClient);
+				}
+				break;
+			}
+		}
+	}
+    it->second.removeClient(&cli);  // Passando ponteiro de 'cli' corretamente
+    cli.leaveChannel(channel);
+
+    // Mensagem de PART para o cliente que saiu
+    std::string partMessage = ":" + cli.getNick() + "!" + cli.getUser() + "@localhost PART " + channel;
+	if (!reason.empty())
+		partMessage += " :" + reason + "\r\n";
+	else
+		partMessage += "\r\n";
+    //send(cli.getFd(), partMessage.c_str(), partMessage.length(), 0);  // Enviar ao cliente que partiu
+
+    // Enviar a mensagem de PART para todos os outros clientes no canal
+    std::vector<Client *> clientsInChannel = it->second.getClients();
+    for (size_t i = 0; i < clientsInChannel.size(); ++i)
+    {
+        // Não envie a mensagem para o cliente que fez o PART
+        if (clientsInChannel[i]->getFd() != cli.getFd()) 
+        {
+            send(clientsInChannel[i]->getFd(), partMessage.c_str(), partMessage.length(), 0);
+        }
+    }
+	log(cli.getNick() + " left channel: " + channel);
+
+    // Se o canal estiver vazio, remova o canal da lista de canais
+    if (it->second.getNumUsers() == 0)
+    {
+        _channels.erase(it);
+		log("Channel " + channel + " has been deleted");
+    }
+}
+
+
+
 
 Server::~Server()
 {

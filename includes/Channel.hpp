@@ -53,6 +53,7 @@ class Channel
 			void sendAll(std::string msg);
 			void addMode(char mode);
 			void removeMode(char mode);
+			std::string getNamesList() const;
 			
 			int getNumUsers() const;	
 			Client *getClient(int fd);
@@ -60,6 +61,7 @@ class Channel
 			const std::string &getKey() const;
 			std::string getTopic() const;
 			int getUserLimit() const;
+			std::vector<Client *> returnClients();
 			
 		
 			void setTopic(const std::string &topic);

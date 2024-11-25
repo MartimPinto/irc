@@ -55,6 +55,7 @@ const std::string &Channel::getName() const
 void Channel::addClient(Client *client)
 {
 	this->_clients.push_back(client);
+
 }
 
 void Channel::addMode(char mode)
@@ -208,6 +209,11 @@ const std::string &Channel::getKey() const
 	return this->_key;
 }
 
+
+std::vector<Client *> Channel::returnClients()
+{
+	return this->_clients;
+}
 void Channel::setTopic(const std::string &topic)
 {
 	this->_topic = topic;
@@ -268,4 +274,19 @@ void Channel::sendAll(std::string msg)
 	for(size_t i = 0; i < _clients.size(); i++)
 		if(send(_clients[i]->getFd(), msg.c_str(), msg.size(), 0) == -1)
 			std::cerr << "send() faild" << std::endl;
+}
+
+std::string Channel::getNamesList() const
+{
+    std::string namesList;
+
+    for (std::vector<Client *>::const_iterator it = this->_clients.begin(); it != this->_clients.end(); ++it)
+    {
+        if ((*it)->isOperator()) // Se é operador, adiciona "@"
+            namesList += "@" + (*it)->getNick() + " ";
+        else
+            namesList += (*it)->getNick() + " ";
+    }
+
+    return namesList;
 }
