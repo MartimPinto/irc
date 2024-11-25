@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 17:12:05 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/25 14:02:54 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/25 16:17:47 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -148,11 +148,11 @@ void Client::setBuffer(std::string buffer)
 	_buffer += buffer;
 }
 
-void Client::setModes(std::string modes)
+void Client::setModes(std::string mode)
 {
-	if (modes.empty())
+	if (mode.empty())
 		return ;
-	_modes = modes;
+	_mode += mode;
 }
 
 std::string Client::getBuffer()
@@ -160,14 +160,14 @@ std::string Client::getBuffer()
 	return this->_buffer;
 }
 
-std::string Client::getModes()
-{
-	return this->_modes;
-}
-
 void Client::clearBuffer()
 {
 	_buffer.clear();
+}
+
+std::string Client::getModes()
+{
+	return this->_mode;
 }
 
 Client::~Client()
@@ -177,5 +177,5 @@ Client::~Client()
         leaveChannel(_channels.front());
     }
 	this->_buffer.clear();
-	this->_modes.clear();
+	this->_mode.clear();
 }

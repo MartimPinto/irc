@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 14:14:32 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/18 16:59:28 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/25 15:37:05 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,11 @@ void Server::closeServer()
 	{
 		_clients.clear();
 		std::vector<Client>().swap(_clients);
+	}
+	if (!_channels.empty())
+	{
+		_channels.clear();
+		std::map<std::string, Channel>().swap(_channels);
 	}
 	close(_socket);
 	exit(0);

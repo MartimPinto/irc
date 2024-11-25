@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:47:43 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/19 13:06:01 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/25 15:20:24 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,9 +41,13 @@ Channel &Channel::operator=(const Channel &src)
 Channel::~Channel()
 {
 	this->_clients.clear();
+	std::vector<Client *>().swap(_clients);
 	this->_operators.clear();
+	std::vector<Client *>().swap(_operators);
 	this->_invited.clear();
+	std::vector<Client *>().swap(_invited);
 	this->_modes.clear();
+	std::vector<char>().swap(_modes);
 }
 
 const std::string &Channel::getName() const

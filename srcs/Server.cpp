@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/25 14:36:39 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/25 16:15:05 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -781,6 +781,7 @@ void Server::handlePart(std::string cmd, Client &cli)
     if (it->second.getNumUsers() == 0)
     {
         _channels.erase(it);
+		
 		log("Channel " + channel + " has been deleted");
     }
 }
