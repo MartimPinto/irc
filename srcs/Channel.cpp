@@ -209,6 +209,11 @@ const std::string &Channel::getKey() const
 	return this->_key;
 }
 
+
+std::vector<Client *> Channel::returnClients()
+{
+	return this->_clients;
+}
 void Channel::setTopic(const std::string &topic)
 {
 	this->_topic = topic;

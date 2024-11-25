@@ -698,9 +698,12 @@ std::string Server::getStartTime()
 void Server::handlePart(std::string cmd, Client &cli)
 {
     std::istringstream iss(cmd);
-    std::string command, channel;
+    std::string command, channel, reason;
     iss >> command >> channel;
-
+	std::getline(iss, reason);
+	removeSpacesAtStart(reason);
+	if (!reason.empty() && reason[0] == ':')
+		reason = reason.substr(1);
     if (channel.empty() || channel[0] != '#')
     {
         sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
@@ -715,13 +718,35 @@ void Server::handlePart(std::string cmd, Client &cli)
         return;
     }
 
+	Channel &chan = it->second;
+
     // Remover o cliente do canal
+	if (chan.isOperator(cli))
+	{
+		for (size_t i = 0; i < chan.returnClients().size(); ++i)
+		{
+			if (chan.returnClients()[i] == &cli)
+			{
+				if (i + 1 < chan.returnClients().size())
+				{
+					std::cout << "MUDEI OPERADOR" << std::endl;
+					Client &nextClient = *chan.returnClients()[i + 1];
+					chan.addOperator(nextClient);
+				}
+				break;
+			}
+		}
+	}
     it->second.removeClient(&cli);  // Passando ponteiro de 'cli' corretamente
     cli.leaveChannel(channel);
 
     // Mensagem de PART para o cliente que saiu
-    std::string partMessage = ":" + cli.getNick() + " PART " + channel + "\r\n";
-    send(cli.getFd(), partMessage.c_str(), partMessage.length(), 0);  // Enviar ao cliente que partiu
+    std::string partMessage = ":" + cli.getNick() + "!" + cli.getUser() + "@localhost PART " + channel;
+	if (!reason.empty())
+		partMessage += " :" + reason + "\r\n";
+	else
+		partMessage += "\r\n";
+    //send(cli.getFd(), partMessage.c_str(), partMessage.length(), 0);  // Enviar ao cliente que partiu
 
     // Enviar a mensagem de PART para todos os outros clientes no canal
     std::vector<Client *> clientsInChannel = it->second.getClients();
@@ -733,11 +758,13 @@ void Server::handlePart(std::string cmd, Client &cli)
             send(clientsInChannel[i]->getFd(), partMessage.c_str(), partMessage.length(), 0);
         }
     }
+	log(cli.getNick() + " left channel: " + channel);
 
     // Se o canal estiver vazio, remova o canal da lista de canais
     if (it->second.getNumUsers() == 0)
     {
         _channels.erase(it);
+		log("Channel " + channel + " has been deleted");
     }
 }
 

@@ -61,6 +61,7 @@ class Channel
 			const std::string &getKey() const;
 			std::string getTopic() const;
 			int getUserLimit() const;
+			std::vector<Client *> returnClients();
 			
 		
 			void setTopic(const std::string &topic);
