@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 16:56:24 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/25 16:17:32 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/26 11:25:14 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ class Client
 			bool isOperator();
 			void registerClient();
 			void setOperator();
+			void removeOperator();
 			void setRealname(std::string realname);
 			std::string getRealname();
 			void setHostname(std::string hostname);

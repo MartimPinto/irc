@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/25 16:57:44 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/26 11:25:36 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -326,7 +326,7 @@ void Server::handleLuser(Client &cli)
 {
 	int numClients = _clients.size();
 	int numChannels = _channels.size();
-	int numOperators = _channels.size();
+	int numOperators = this->countOperators();
 	
 	sendResponse(RPL_LUSERCLIENT(cli.getNick(), numClients), cli.getFd());
 	sendResponse(RPL_LUSEROP(cli.getNick(), numOperators), cli.getFd());
@@ -341,7 +341,6 @@ void Server::handleLuser(Client &cli)
 
 void Server::handleJoin(std::string cmd, Client &cli)
 {
-    std::cout << "ENTROU NA JOIN" << std::endl;
     std::istringstream iss(cmd);
     std::string command, channel, password;
     iss >> command >> channel >> password;
@@ -359,7 +358,6 @@ void Server::handleJoin(std::string cmd, Client &cli)
 
     if (result.second) 
     {
-        std::cout << "ENTROU CREATE" << std::endl;
         chan.addOperator(cli);
         cli.setOperator();
         log("Created new channel: " + channel);
@@ -367,21 +365,18 @@ void Server::handleJoin(std::string cmd, Client &cli)
 
     if (chan.hasKey() && chan.getKey() != password)
     {
-        std::cout << "ENTROU KEY" << std::endl;
         sendResponse(ERR_BADCHANNELKEY(channel), cli.getFd());
         return;
     }
 
     if (chan.isInviteOnly() && !chan.isClientInvited(cli))
     {
-        std::cout << "ENTROU INVITE" << std::endl;
         sendResponse(ERR_INVITEONLYCHAN(channel), cli.getFd());
         return;
     }
 
     if (chan.hasUserLimit() && chan.getNumUsers() >= chan.getUserLimit())
     {
-        std::cout << "ENTROU LIMIT" << std::endl;
         sendResponse(ERR_CHANNELISFULL(channel), cli.getFd());
         return;
     }
@@ -742,7 +737,7 @@ void Server::handlePart(std::string cmd, Client &cli)
     // Remover o cliente do canal
     chan.removeClient(&cli);  // Passando ponteiro de 'cli' corretamente
     cli.leaveChannel(channel);
-	if (chan.isOperator(cli))
+	/*if (chan.isOperator(cli))
 	{
 
     	//chan.removeOperator(&cli);
@@ -755,7 +750,7 @@ void Server::handlePart(std::string cmd, Client &cli)
 			std::string response = ":" + SERVER_NAME + " MODE " + channel + " +o " + nextClient.getNick() + "\r\n";
         	send(nextClient.getFd(), response.c_str(), response.length(), 0);
     	}
-	}
+	}*/
 
     // Mensagem de PART para o cliente que saiu
    	std::string partMessage = ":" + cli.getNick() + "!" + cli.getUser() + "@localhost PART " + channel;
@@ -782,12 +777,26 @@ void Server::handlePart(std::string cmd, Client &cli)
     if (it->second.getNumUsers() == 0)
     {
         _channels.erase(it);
+		if (cli.isOperator())
+		{
+			cli.removeOperator();
+		}
 		
 		log("Channel " + channel + " has been deleted");
     }
 }
 
 
+int Server::countOperators()
+{
+	int count = 0;
+	for (size_t i = 0; i < _clients.size(); i++)
+	{
+		if (_clients[i].isOperator())
+			count++;
+	}
+	return count;
+}
 
 
 Server::~Server()
