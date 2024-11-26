@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 16:56:24 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/26 11:25:14 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/26 16:27:02 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ class Client
 			void setServername(std::string servername);
 			std::string getServername();
 			std::vector<std::string> getChannels();
-			void joinChannel(const std::string &channel);
+			void joinChannel(std::string &channel);
 			void leaveChannel(const std::string &channel);
 
 			void setBuffer(std::string buffer);

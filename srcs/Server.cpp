@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/26 11:25:36 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/26 16:44:44 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,7 +155,9 @@ void Server::handleClient(int client_index)
 		close(client_index);
 	}
 	else
-	{	
+	{
+	
+		std::cout << "BUFFER: " << buffer << std::endl;
 		cli.setBuffer(buffer);
 		cli.getBuffer().append("\0");
 		if (cli.getBuffer().find_first_of("\r\n") == std::string::npos)
@@ -166,6 +168,7 @@ void Server::handleClient(int client_index)
 			parseCommand(cmd[i], cli, client_index);
 		if (cli.getBuffer().find_first_of("\r\n") != std::string::npos)
 			cli.clearBuffer();
+		std::cout << "SAI HANDLE CLIENT: " << client_index << std::endl;
 	}
 }
 
@@ -219,6 +222,8 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 				handlePrivMSG(cmd, cli);
 			else if (cmd.find("LIST") == 0 || cmd.find("list") == 0)
 				handleList(cli);
+			else if (cmd.find("WHO") == 0 || cmd.find("who") == 0)
+				handleWho(cmd, cli);
 			else if (cli.isOperator())
 			{
 				if (cmd.find("TOPIC") == 0 || cmd.find("topic") == 0)
@@ -239,6 +244,37 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 	}
 }
 
+
+void Server::handleWho(std::string cmd, Client &cli)
+{
+	std::istringstream iss(cmd);
+	std::string command, channel;
+	iss >> command >> channel;
+
+	if (channel.empty() || channel[0] != '#')
+	{
+		sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
+		return;
+	}
+	std::map<std::string, Channel>::iterator it = _channels.find(channel);
+	if (it == _channels.end())
+	{
+		sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
+		return;
+	}
+	Channel &chan = it->second;
+	std::vector<Client *> clientsinChannel = chan.getClients();
+	for (size_t i = 0; i < clientsinChannel.size(); i++)
+	{
+		std::string flag = " H";
+		if (clientsinChannel[i]->isOperator())
+			flag += " @";
+		sendResponse(RPL_WHOREPLY(cli.getNick(), clientsinChannel[i]->getHostname(), channel, clientsinChannel[i]->getServername(), clientsinChannel[i]->getUsername(), clientsinChannel[i]->getRealname(), flag), cli.getFd());
+	}
+	sendResponse(RPL_ENDOFWHO(cli.getNick(), channel), cli.getFd());
+	std::vector<Client *>().swap(clientsinChannel);
+	
+}
 
 void Server::handleNick(std::string cmd, Client &cli)
 {
@@ -399,6 +435,7 @@ void Server::handleJoin(std::string cmd, Client &cli)
             send(clientsInChannel[i]->getFd(), joinMsg.c_str(), joinMsg.length(), 0);
         }
     }
+	std::vector<Client *>().swap(clientsInChannel);
 
     log(cli.getNick() + " joined channel: " + channel);
 

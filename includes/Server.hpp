@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/13 12:06:14 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/26 11:10:07 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/26 12:27:43 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,6 +82,7 @@ class Server
 			void handleLimitMode(Client &cli, Channel &chan, std::string param, char flag);
 			void handleKeyMode(Client &cli, Channel &chan, std::string param, char flag);
 			void handleInviteOnlyMode(Client &cli, Channel &chan, std::string param, char flag);
+			void handleWho(std::string cmd, Client &cli);
 			void handleLuser(Client &cli);
 };
 
