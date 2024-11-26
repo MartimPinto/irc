@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/13 12:06:14 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/25 13:43:01 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/26 11:10:07 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ class Server
 			Client &getClient(int fd);
 			Client *getClientNick(const std::string &nick);
 			void printChannelNames() const;
+			int countOperators();
 
 	
 	private:
