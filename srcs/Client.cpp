@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 17:12:05 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/26 11:25:27 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/26 16:26:34 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,8 @@ void Client::authenticate()
 
 std::string Client::getNick()
 {
+	if (_nickname.empty())
+		return ("");
 	return this->_nickname;
 }
 
@@ -132,7 +134,7 @@ std::vector<std::string> Client::getChannels()
 	return this->_channels;
 }
 
-void Client::joinChannel(const std::string &channel)
+void Client::joinChannel(std::string &channel)
 {
 	_channels.push_back(channel);
 }
@@ -150,6 +152,8 @@ void Client::setBuffer(std::string buffer)
 {
 	if (buffer.empty())
 		return ;
+	if (!_buffer.empty())
+		_buffer.clear();
 	_buffer += buffer;
 }
 
@@ -168,7 +172,9 @@ std::string Client::getBuffer()
 void Client::clearBuffer()
 {
 	_buffer.clear();
+	std::string().swap(_buffer);
 }
+
 
 std::string Client::getModes()
 {
@@ -181,6 +187,11 @@ Client::~Client()
     {
         leaveChannel(_channels.front());
     }
-	this->_buffer.clear();
+	for (size_t i = 0; i < _channels.size(); i++)
+	{
+		_channels.erase(_channels.begin() + i);
+	}
+	this->_channels.clear();
+	std::vector<std::string>().swap(_channels);
 	this->_mode.clear();
 }

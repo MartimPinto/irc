@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:47:43 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/25 15:20:24 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/26 16:30:59 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,8 @@ Channel &Channel::operator=(const Channel &src)
 
 Channel::~Channel()
 {
+	for (size_t i = 0; i < _clients.size(); i++)
+		_clients.erase(_clients.begin() + i);
 	this->_clients.clear();
 	std::vector<Client *>().swap(_clients);
 	this->_operators.clear();
@@ -283,14 +285,27 @@ void Channel::sendAll(std::string msg)
 std::string Channel::getNamesList() const
 {
     std::string namesList;
+	
 
-    for (std::vector<Client *>::const_iterator it = this->_clients.begin(); it != this->_clients.end(); ++it)
+    /*for (std::vector<Client *>::const_iterator it = this->_clients.begin(); it != this->_clients.end(); ++it)
     {
         if ((*it)->isOperator()) // Se é operador, adiciona "@"
             namesList += "@" + (*it)->getNick() + " ";
         else
             namesList += (*it)->getNick() + " ";
-    }
+    }*/
 
-    return namesList;
+   for(size_t i = 0; i < _clients.size(); i++)
+   {
+		std::cout << "---------->NICK: " << _clients[i]->getNick() << std::endl;
+		if (_clients[i]->isOperator())
+			namesList += "@" + _clients[i]->getNick() + " ";
+		else
+			namesList += _clients[i]->getNick() + " ";
+   }
+	
+	if (namesList.size() > 0)
+    	return namesList;
+	else
+		return "";
 }

@@ -74,6 +74,8 @@
 #define RPL_MOTD(nickname) (":" + SERVER_NAME + " 372 " + nickname + " :- " + "Welcome and enjoy your stay!" + CRLF)
 #define RPL_ENDOFMOTD(nickname) (":" + SERVER_NAME + " 376 " + nickname + " :End of MOTD command." + CRLF)
 #define RPL_UMODEIS(nickname, modes) (": 221 " + nickname + " " + modes + " :are your current mode" + CRLF)
+#define RPL_WHOREPLY(nickname, hostname,  channel, seconduser, user, secondrealname, flag) (":" + hostname + " 352 " + nickname + " " + channel + " " + seconduser + " " + hostname + " irc " + user + flag + " :2 " + secondrealname + CRLF)
+#define RPL_ENDOFWHO(nickname, channel) (":" + SERVER_NAME + " 315 " +nickname + " " + channel + " :End of WHO list" + CRLF)
 
 void log(const std::string &message);
 void exitError(const std::string &error);
