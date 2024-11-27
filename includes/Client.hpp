@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 16:56:24 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/26 16:27:02 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/27 12:17:46 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,8 @@ class Client
 {
 	public:
 			Client();
+			Client(const Client &src);
+			Client &operator=(const Client &src);
 			~Client();
 
 			int getFd();

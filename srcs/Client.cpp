@@ -6,13 +6,39 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 17:12:05 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/26 16:26:34 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/27 14:09:00 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Client.hpp"
 
 Client::Client(): _authenticated(false), _registered(false), _operator(false){}
+
+Client::Client(const Client &src)
+{
+	*this = src;
+}
+
+Client &Client::operator=(const Client &src)
+{
+	if (this != &src)
+	{
+		this->_fd = src._fd;
+		this->_ip = src._ip;
+		this->_authenticated = src._authenticated;
+		this->_nickname = src._nickname;
+		this->_username = src._username;
+		this->_registered = src._registered;
+		this->_operator = src._operator;
+		this->_realname = src._realname;
+		this->_hostname = src._hostname;
+		this->_servername = src._servername;
+		this->_channels = src._channels;
+		this->_buffer = src._buffer;
+		this->_mode = src._mode;
+	}
+	return *this;
+}
 
 int Client::getFd()
 {
@@ -136,15 +162,22 @@ std::vector<std::string> Client::getChannels()
 
 void Client::joinChannel(std::string &channel)
 {
-	_channels.push_back(channel);
+	this->_channels.push_back(channel);
 }
+
+
 
 void Client::leaveChannel(const std::string &channel)
 {
-	std::vector<std::string>::iterator it = std::find(_channels.begin(), _channels.end(), channel);
-	if (it != _channels.end())
+	std::vector<std::string>::iterator it = _channels.begin();
+	while (it != _channels.end())
 	{
-		_channels.erase(it);
+		if (*it == channel)
+		{
+			_channels.erase(it);
+			return ;
+		}
+		it++;
 	}
 }
 
@@ -183,11 +216,12 @@ std::string Client::getModes()
 
 Client::~Client()
 {
-    while (!_channels.empty())
-    {
-        leaveChannel(_channels.front());
-    }
-	for (size_t i = 0; i < _channels.size(); i++)
+	while (!_channels.empty())
+	{
+		this->leaveChannel(_channels.back());
+	}
+	
+    for (size_t i = 0; i < _channels.size(); i++)
 	{
 		_channels.erase(_channels.begin() + i);
 	}

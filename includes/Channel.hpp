@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:42:11 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/25 14:53:42 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/27 17:01:52 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ class Channel
 			bool _restricted;
 
 	public:
+			Channel();
 			Channel(const std::string &name);
 			Channel(const Channel &src);
 			Channel &operator=(const Channel &src);
@@ -53,7 +54,6 @@ class Channel
 			void sendAll(std::string msg);
 			void addMode(char mode);
 			void removeMode(char mode);
-			void deleteOperators();
 			std::string getNamesList() const;
 			
 			int getNumUsers() const;	
