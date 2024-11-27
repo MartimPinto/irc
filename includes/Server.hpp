@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/13 12:06:14 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/26 12:27:43 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/27 12:34:18 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ class Server
 			void clearClients(int fd);
 			void clearChannels(int fd);
 			void closeServer();
+			Channel &getChannel(const std::string &name);
 			Client &getClient(int fd);
 			Client *getClientNick(const std::string &nick);
 			void printChannelNames() const;

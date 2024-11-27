@@ -6,11 +6,13 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 15:47:43 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/26 16:30:59 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/27 17:01:33 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Channel.hpp"
+
+Channel::Channel(): _name(""), _topicProtected(false), _inviteOnly(false), _userLimit(0), _modes('o'), _restricted(false){}
 
 Channel::Channel(const std::string &name): _name(name), _topicProtected(false), _inviteOnly(false), _userLimit(0), _modes('o'), _restricted(false){}
 
@@ -44,8 +46,12 @@ Channel::~Channel()
 		_clients.erase(_clients.begin() + i);
 	this->_clients.clear();
 	std::vector<Client *>().swap(_clients);
+	for (size_t i = 0; i < _operators.size(); i++)
+		_operators.erase(_operators.begin() + i);
 	this->_operators.clear();
 	std::vector<Client *>().swap(_operators);
+	for (size_t i = 0; i < _invited.size(); i++)
+		_invited.erase(_invited.begin() + i);
 	this->_invited.clear();
 	std::vector<Client *>().swap(_invited);
 	this->_modes.clear();
@@ -61,7 +67,6 @@ const std::string &Channel::getName() const
 void Channel::addClient(Client *client)
 {
 	this->_clients.push_back(client);
-
 }
 
 void Channel::addMode(char mode)
@@ -164,14 +169,17 @@ bool Channel::isClientInChannel(const Client &client) const
 
 void Channel::broadcastMessage(const std::string &message, int senderFd) 
 {
-    for (size_t i = 0; i < _clients.size(); ++i) 
+	if (!_clients.empty())
 	{
-        Client* client = _clients[i];    
-        if (client->getFd() != senderFd) {
-            send(client->getFd(), message.c_str(), message.length(), 0);
-        }
-    }
-    std::cout << std::endl;
+   		for (size_t i = 0; i < _clients.size(); i++) 
+		{   
+        	if (_clients[i]->getFd() != senderFd) 
+			{
+            	send(_clients[i]->getFd(), message.c_str(), message.length(), 0);
+        	}
+    	}
+	}
+    	std::cout << std::endl;
 }
 
 Client *Channel::getClient(int fd)

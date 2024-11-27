@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/24 14:14:32 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/26 15:56:27 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/27 17:05:39 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,17 +58,19 @@ void Server::closeServer()
 		close(_clients[i].getFd());
 		_clients[i].clearBuffer();
 	}
-	
+
 	for (size_t i = 0; i < _clients.size(); i++)
 	{
 		_clients.erase(_clients.begin() + i);
 	}
-
+	for (size_t i = 0; i < _clients.size(); i++)
+	{
+		_clients[i].~Client();
+	}
 	_fds.clear();
 	std::vector<pollfd>().swap(_fds);
 	if (!_clients.empty())
 		delete &_clients[0];
-	
 	if (_clients.empty())
 	{
 		

@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/26 16:44:44 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/11/27 17:04:12 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -156,8 +156,6 @@ void Server::handleClient(int client_index)
 	}
 	else
 	{
-	
-		std::cout << "BUFFER: " << buffer << std::endl;
 		cli.setBuffer(buffer);
 		cli.getBuffer().append("\0");
 		if (cli.getBuffer().find_first_of("\r\n") == std::string::npos)
@@ -168,7 +166,6 @@ void Server::handleClient(int client_index)
 			parseCommand(cmd[i], cli, client_index);
 		if (cli.getBuffer().find_first_of("\r\n") != std::string::npos)
 			cli.clearBuffer();
-		std::cout << "SAI HANDLE CLIENT: " << client_index << std::endl;
 	}
 }
 
@@ -222,8 +219,8 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 				handlePrivMSG(cmd, cli);
 			else if (cmd.find("LIST") == 0 || cmd.find("list") == 0)
 				handleList(cli);
-			else if (cmd.find("WHO") == 0 || cmd.find("who") == 0)
-				handleWho(cmd, cli);
+			/*else if (cmd.find("WHO") == 0 || cmd.find("who") == 0)
+				handleWho(cmd, cli);*/
 			else if (cli.isOperator())
 			{
 				if (cmd.find("TOPIC") == 0 || cmd.find("topic") == 0)
@@ -375,7 +372,7 @@ void Server::handleLuser(Client &cli)
 	sendResponse(RPL_UMODEIS(cli.getNick(), cli.getModes()), cli.getFd());
 }
 
-void Server::handleJoin(std::string cmd, Client &cli)
+/*void Server::handleJoin(std::string cmd, Client &cli)
 {
     std::istringstream iss(cmd);
     std::string command, channel, password;
@@ -399,7 +396,7 @@ void Server::handleJoin(std::string cmd, Client &cli)
         log("Created new channel: " + channel);
     }
 
-    if (chan.hasKey() && chan.getKey() != password)
+	if (chan.hasKey() && chan.getKey() != password)
     {
         sendResponse(ERR_BADCHANNELKEY(channel), cli.getFd());
         return;
@@ -439,13 +436,81 @@ void Server::handleJoin(std::string cmd, Client &cli)
 
     log(cli.getNick() + " joined channel: " + channel);
 
-    // Adiciona a resposta NAMES para o novo cliente
+    //Adiciona a resposta NAMES para o novo cliente
     std::string namesList = chan.getNamesList();
     std::string namesResponse = ":" + SERVER_NAME + " 353 " + cli.getNick() +
                                  " = " + channel + " :" + namesList + "\r\n";
     namesResponse += ":" + SERVER_NAME + " 366 " + cli.getNick() +
                      " " + channel + " :End of /NAMES list.\r\n";
     send(cli.getFd(), namesResponse.c_str(), namesResponse.length(), 0);
+}*/
+
+
+void Server::handleJoin(std::string cmd, Client &cli) 
+{
+    std::istringstream iss(cmd);
+    std::string command, channel, password;
+    iss >> command >> channel >> password;
+
+    if (channel.empty() || channel[0] != '#' || channel.size() > 50) 
+	{
+        sendResponse(ERR_NEEDMOREPARAMS(channel), cli.getFd());
+        return;
+    }
+
+    std::map<std::string, Channel>::iterator it = _channels.find(channel);
+    if (it == _channels.end()) 
+	{
+        Channel newChannel(channel);
+        _channels.insert(std::make_pair(channel, newChannel));
+        it = _channels.find(channel); 
+        it->second.addOperator(cli);  
+		_channels[channel].addClient(&cli);
+        cli.setOperator();
+        cli.joinChannel(channel);
+        log("Created new channel: " + channel);
+    } 
+	else 
+	{
+        Channel &chan = it->second;
+
+        if (chan.hasKey() && (chan.getKey() != password || password.empty())) 
+		{
+            sendResponse(ERR_BADCHANNELKEY(channel), cli.getFd());
+            return;
+        }
+        if (chan.isInviteOnly() && !chan.isClientInvited(cli)) 
+		{
+            sendResponse(ERR_INVITEONLYCHAN(channel), cli.getFd());
+            return;
+        }
+        if (chan.hasUserLimit() && chan.getNumUsers() >= chan.getUserLimit()) 
+		{
+            sendResponse(ERR_CHANNELISFULL(channel), cli.getFd());
+            return;
+        }
+        chan.addClient(&cli);
+        cli.joinChannel(channel);
+    }
+
+    sendResponse(RPL_JOIN(cli.getNick(), channel), cli.getFd());
+    Channel &chan = it->second;
+    chan.broadcastMessage(":" + cli.getNick() + " JOIN " + channel + CRLF, cli.getFd());
+
+    log(cli.getNick() + " joined channel: " + channel);
+
+    std::string namesList = chan.getNamesList();
+    std::string namesResponse = ":" + SERVER_NAME + " 353 " + cli.getNick() +
+                                 " = " + channel + " :" + namesList + "\r\n";
+    namesResponse += ":" + SERVER_NAME + " 366 " + cli.getNick() +
+                     " " + channel + " :End of /NAMES list.\r\n";
+    sendResponse(namesResponse, cli.getFd());
+
+    if (!chan.getTopic().empty()) {
+        std::string topicResponse = ":" + SERVER_NAME + " 332 " + cli.getNick() +
+                                    " " + channel + " :" + chan.getTopic() + "\r\n";
+        sendResponse(topicResponse, cli.getFd());
+    }
 }
 
 void Server::handlePrivMSG(std::string cmd, Client &cli)
@@ -833,6 +898,14 @@ int Server::countOperators()
 			count++;
 	}
 	return count;
+}
+
+Channel &Server::getChannel(const std::string &channel)
+{
+	std::map<std::string, Channel>::iterator it = _channels.find(channel);
+	if (it == _channels.end())
+		throw std::runtime_error("Channel not found");
+	return it->second;
 }
 
 
