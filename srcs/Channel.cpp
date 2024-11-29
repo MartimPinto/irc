@@ -292,26 +292,14 @@ void Channel::sendAll(std::string msg)
 
 std::string Channel::getNamesList() const
 {
-    std::string namesList;
-	
-
-    /*for (std::vector<Client *>::const_iterator it = this->_clients.begin(); it != this->_clients.end(); ++it)
-    {
-        if ((*it)->isOperator()) // Se é operador, adiciona "@"
-            namesList += "@" + (*it)->getNick() + " ";
-        else
-            namesList += (*it)->getNick() + " ";
-    }*/
-
-   for(size_t i = 0; i < _clients.size(); i++)
-   {
-		std::cout << "---------->NICK: " << _clients[i]->getNick() << std::endl;
+	std::string namesList;
+	for(size_t i = 0; i < _clients.size(); i++)
+	{
 		if (_clients[i]->isOperator())
 			namesList += "@" + _clients[i]->getNick() + " ";
 		else
 			namesList += _clients[i]->getNick() + " ";
-   }
-	
+	}
 	if (namesList.size() > 0)
     	return namesList;
 	else

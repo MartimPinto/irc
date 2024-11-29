@@ -68,7 +68,6 @@ std::string extractCommand(std::string &cmd, int characters)
 	size_t endPos = message.find_first_of(" \r\n");
     if (endPos != std::string::npos)
         message = message.substr(0, endPos);
-    std::cout << "MESSAGE: " <<  message << std::endl;
     message = trim(message);
 	removeNewlines(message);
     return message;

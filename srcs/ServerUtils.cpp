@@ -52,11 +52,9 @@ void Server::verifyPassword(std::string cmd, Client &cli, int client_index)
 
 void Server::closeServer()
 {
-	std::cout << "ENTREI CLOSE SERVER" << std::endl;
 	std::map<int, Client>::iterator it = _clients.begin();
 	while (it != _clients.end())
 	{
-		std::cout << "Client " << it->second.getNick() << " disconnected" << std::endl;
 		std::cout << "Client " << it->first << " disconnected" << std::endl;
 		close(it->first);
 		it->second.clearBuffer();
@@ -64,28 +62,8 @@ void Server::closeServer()
 		it++;
 	}
 	_clients.clear();
-	/*for (size_t i = 0; i < _clients.size(); i++)
-	{
-		std::cout << "Client " << _clients[i].getFd() << " disconnected" << std::endl;
-		close(_clients[i].getFd());
-		_clients[i].clearBuffer();
-	}*/
-
-
-
-	/*for (size_t i = 0; i < _clients.size(); i++)
-	{
-		_clients.erase(_clients.begin() + i);
-	}*/
-
-	/*for (size_t i = 0; i < _clients.size(); i++)
-	{
-		_clients[i].~Client();
-	}*/
 	_fds.clear();
 	std::vector<pollfd>().swap(_fds);
-	/*if (!_clients.empty())
-		delete &_clients[0];*/
 	if (_clients.empty())
 	{
 		_clients.clear();
@@ -99,45 +77,8 @@ void Server::closeServer()
 	exit(0);
 }
 
-/*void Server::clearClients(int fd)
-{
-	for (size_t i = 0; i < _fds.size(); i++)
-	{
-		if (_fds[i].fd == fd)
-		{
-			_fds.erase(_fds.begin() + i);
-			break ;
-		}
-	}
-
-	std::map<int, Client>::iterator it = _clients.find(fd);
-	if (it != _clients.end())
-	{
-		_clients.erase(it);
-	}
-
-	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-		if (it->first == fd)
-		{
-			it->second.clearBuffer();
-			_clients.erase(it);
-			break ;
-		}
-	}
-	for (size_t i = 0; i < _clients.size(); i++)
-	{
-		if(_clients[i].getFd() == fd)
-		{
-			_clients.erase(_clients.begin() + i);
-			break;
-		}
-	}
-}*/
-
 void Server::clearClients(int fd)
 {
-    // Remover o file descriptor de _fds
     for (std::vector<struct pollfd>::size_type i = 0; i < _fds.size(); ++i)
     {
         if (_fds[i].fd == fd)
@@ -147,11 +88,10 @@ void Server::clearClients(int fd)
         }
     }
 
-    // Remover o cliente do mapa _clients
     std::map<int, Client>::iterator it = _clients.find(fd);
     if (it != _clients.end())
     {
-        it->second.clearBuffer(); // Limpar o buffer do cliente antes de apagá-lo
+        it->second.clearBuffer(); 
         _clients.erase(it);
     }
 }
