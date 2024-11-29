@@ -91,6 +91,7 @@ int Server::startServer()
 
 void Server::startListen()
 {
+	std::cout << "entrei start listen" << _port << std::endl;
 	std::cout << "\n *** Server: " 
 	<< _socket << " Connected" <<" ***" << std::endl;
 
@@ -113,10 +114,13 @@ void Server::startListen()
 			}
 		}
 	}
+	std::cout << "sai start listen" << _port << std::endl;
 }
 
 void Server::handleNewConnection()
 {
+	
+	std::cout << "entrei handle new connection" << std::endl;
 	Client cl;
 	struct sockaddr_in claddr;
 	struct pollfd npoll;
@@ -134,40 +138,112 @@ void Server::handleNewConnection()
 
 	cl.setFd(_newSocket);
 	cl.setIp(inet_ntoa(claddr.sin_addr));
-	_clients.push_back(cl);
+	_clients.insert(std::make_pair(cl.getFd(), cl));
 	_fds.push_back(npoll);
 
 	log("New connection accepted");
+	std::cout << "sai handle new connection" << std::endl;
 }
+
+// void Server::handleClient(int client_index)
+// {
+//     std::map<int, Client>::iterator it = _clients.find(client_index);
+//     if (it == _clients.end())
+//     {
+//         std::cout << "Client " << client_index << " not found" << std::endl;
+//         return;
+//     }
+
+//     std::vector<std::string> cmd;
+//     char buffer[BUFFER_SIZE];
+//     memset(buffer, 0, sizeof(buffer));
+//     Client &cli = it->second;
+//     int bytesReceived = recv(client_index, buffer, BUFFER_SIZE - 1, 0);
+//     std::cout << "----->Bytes Received: " << bytesReceived << std::endl;
+    
+//     if (bytesReceived <= 0)
+//     {
+//         std::cout << "------------->ENTREI!!!!" << std::endl;
+//         std::cout << "Client " << client_index << " disconnected" << std::endl;
+//         clearChannels(client_index);
+//         clearClients(client_index);
+//         close(client_index);
+//     }
+//     else
+//     {
+//         cli.setBuffer(buffer);
+//         // cli.getBuffer().append("\0");
+//         if (cli.getBuffer().find_first_of("\r\n") == std::string::npos)
+//             return;
+        
+//         log("Received message from client");
+//         cmd = splitBuffer(cli.getBuffer());
+//         for (size_t i = 0; i < cmd.size(); i++)
+//             parseCommand(cmd[i], cli, client_index);
+
+//         if (cli.getBuffer().find_first_of("\r\n") != std::string::npos)
+//             cli.clearBuffer();
+//     }
+// }
+
 
 void Server::handleClient(int client_index)
 {
-	std::vector<std::string> cmd;
-	char buffer[BUFFER_SIZE];
-	memset(buffer, 0, sizeof(buffer));
-	Client &cli = getClient(client_index);
-	int bytesReceived = recv(client_index, buffer, BUFFER_SIZE - 1, 0);
-	if (bytesReceived <= 0)
-	{
-		std::cout << "Client " << client_index << " disconnected" << std::endl;
-		clearChannels(client_index);
-		clearClients(client_index);
-		close(client_index);
-	}
-	else
-	{
-		cli.setBuffer(buffer);
-		cli.getBuffer().append("\0");
-		if (cli.getBuffer().find_first_of("\r\n") == std::string::npos)
-			return;
-		log("Received message from client");
-		cmd = splitBuffer(cli.getBuffer());
-		for (size_t i = 0; i < cmd.size(); i++)
-			parseCommand(cmd[i], cli, client_index);
-		if (cli.getBuffer().find_first_of("\r\n") != std::string::npos)
-			cli.clearBuffer();
-	}
+	std::cout << "entrei handle client" << std::endl;
+    std::map<int, Client>::iterator it = _clients.find(client_index);
+    if (it == _clients.end())
+    {
+        std::cout << "Client " << client_index << " not found" << std::endl;
+        return;
+    }
+
+    std::vector<std::string> cmd;
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, sizeof(buffer));
+    Client &cli = it->second;
+    int bytesReceived = recv(client_index, buffer, BUFFER_SIZE - 1, 0);
+    std::cout << "----->Bytes Received: " << bytesReceived << std::endl;
+    
+    if (bytesReceived <= 0)
+    {
+        std::cout << "------------->ENTREI!!!!" << std::endl;
+        std::cout << "Client " << client_index << " disconnected" << std::endl;
+
+        // Antes de remover o cliente do mapa, você pode limpar os canais
+        clearChannels(client_index);
+
+        // Agora remova o cliente do mapa
+        _clients.erase(it);  // Certifique-se de remover o cliente corretamente
+
+        // Após a remoção, o cliente não deve ser acessado
+        close(client_index);
+    }
+    else
+    {
+        cli.setBuffer(buffer);
+
+        // Verifique se o buffer tem dados completos antes de processar
+        if (cli.getBuffer().find_first_of("\r\n") == std::string::npos)
+            return;
+        
+        log("Received message from client");
+        cmd = splitBuffer(cli.getBuffer());
+        for (size_t i = 0; i < cmd.size(); i++)
+		{
+            parseCommand(cmd[i], cli, client_index);
+			if (cmd[i].find("QUIT") == 0 || cmd[i].find("quit") == 0)
+			{
+				return ;
+			}
+		}
+
+        if (cli.getBuffer().find_first_of("\r\n") != std::string::npos)
+            cli.clearBuffer();
+    }
+	std::cout << "sai handle client" << std::endl;
 }
+
+
 
 void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 {
@@ -725,7 +801,7 @@ void Server::handleInvite(std::string cmd, Client &cli)
 
 	
 
-void Server::handleQuit(std::string cmd, int fd)
+/*void Server::handleQuit(std::string cmd, int fd)
 {
     std::string message = extractCommand(cmd, 5);
     if (message.empty())
@@ -734,7 +810,7 @@ void Server::handleQuit(std::string cmd, int fd)
     std::string quitMessage = ":" + getClient(fd).getNick() + " QUIT :" + message + "\r\n";
 
     std::vector<std::string> channels = getClient(fd).getChannels();
-    std::vector<std::string> emptyChannels;
+    std::map<int, std::string> emptyChannels;
 
     for (size_t i = 0; i < channels.size(); ++i)
     {
@@ -753,12 +829,18 @@ void Server::handleQuit(std::string cmd, int fd)
 
             if (chan.getClients().empty())
             {
-                emptyChannels.push_back(channels[i]);  // Mark empty channels for deletion
+                emptyChannels.insert(std::make_pair(i, channels[i]));  // Mark empty channels for deletion
             }
         }
     }
 
     // Delete empty channels after the loop
+	std::map<int, std::string>::iterator it;
+	for (it = emptyChannels.begin(); it != emptyChannels.end(); ++it)
+	{
+		_channels.erase(it->second);
+		log("Channel " + it->second + " has been deleted");
+	}
     for (size_t i = 0; i < emptyChannels.size(); ++i)
     {
         _channels.erase(emptyChannels[i]);
@@ -773,18 +855,85 @@ void Server::handleQuit(std::string cmd, int fd)
     clearChannels(fd);
     clearClients(fd);
     close(fd);
+
+}*/
+
+void Server::handleQuit(std::string cmd, int fd)
+{
+    std::cout << "ENTREI NO HANDLE QUIT" << std::endl;
+	// Procurar o cliente no mapa
+    std::map<int, Client>::iterator it = _clients.find(fd);
+    if (it == _clients.end()) 
+	{
+		std::cout << "CLIENTE NÃO ENCONTRADO" << std::endl;
+        return; // Cliente já foi removido ou não existe
+    }
+
+    Client& client = it->second;
+    std::string message = extractCommand(cmd, 5);
+    if (message.empty()) {
+        message = "Client quit";
+    }
+	
+	if (client.getNick().empty())
+		std::cout << "NICK VAZIO" << std::endl;
+
+    std::string quitMessage = ":" + client.getNick() + " QUIT :" + message + "\r\n";
+
+    // Armazenar informações do cliente antes de apagá-lo
+    std::vector<std::string> channels = client.getChannels();
+
+    // Notificar canais
+    std::set<std::string> emptyChannels;
+    for (std::vector<std::string>::size_type i = 0; i < channels.size(); ++i)
+    {
+        std::map<std::string, Channel>::iterator chanIt = _channels.find(channels[i]);
+        if (chanIt != _channels.end())
+        {
+            Channel& chan = chanIt->second;
+            chan.removeClient(&client);
+
+            // Notificar outros clientes no canal
+            std::vector<Client*> clientsInChannel = chan.getClients();
+            for (std::vector<Client*>::size_type j = 0; j < clientsInChannel.size(); ++j)
+            {
+                send(clientsInChannel[j]->getFd(), quitMessage.c_str(), quitMessage.length(), 0);
+            }
+
+            if (chan.getClients().empty())
+            {
+                emptyChannels.insert(channels[i]); // Marcar canais vazios
+            }
+        }
+    }
+
+    // Apagar canais vazios
+    for (std::set<std::string>::iterator it = emptyChannels.begin(); it != emptyChannels.end(); ++it)
+    {
+        _channels.erase(*it);
+        log("Channel " + *it + " has been deleted");
+    }
+
+    // Log de saída do cliente
+    log("Client " + client.getNick() + " has quit");
+
+    // Apagar cliente
+	emptyChannels.clear();
+	clearChannels(fd);
+    clearClients(fd);
+	std::cout << "FIZ CLOSE DO CLIENTE" << std::endl;
+    close(fd);
 }
+
 
 
 Client &Server::getClient(int fd)
 {
-	for (size_t i = 0; i < _clients.size(); i++)
-	{
-		if (_clients[i].getFd() == fd)
-			return _clients[i];
-	}
-	throw std::runtime_error("Client not found");
-	return _clients[0];
+    std::map<int, Client>::iterator it = _clients.find(fd);
+    if (it != _clients.end()) {
+        return it->second; // Retorna o cliente encontrado
+    }
+    throw std::runtime_error("Client not found"); // Cliente não encontrado
 }
 
 Client *Server::getClientNick(const std::string &nick)

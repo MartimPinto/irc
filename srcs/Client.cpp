@@ -73,7 +73,7 @@ void Client::authenticate()
 std::string Client::getNick()
 {
 	if (_nickname.empty())
-		return ("");
+		return ("empty");
 	return this->_nickname;
 }
 

@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <algorithm>
 #include <cctype>
+#include <set>
 #include <sstream>
 #define CRLF "\r\n"
 
