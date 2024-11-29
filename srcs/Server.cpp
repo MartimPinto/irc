@@ -495,6 +495,7 @@ void Server::handleJoin(std::string cmd, Client &cli)
 
     sendResponse(RPL_JOIN(cli.getNick(), channel), cli.getFd());
     Channel &chan = it->second;
+	std::cout << "-----------------> Valor do cliente DF que dá erro: " << cli.getFd() << std::endl;
     chan.broadcastMessage(":" + cli.getNick() + " JOIN " + channel + CRLF, cli.getFd());
 
     log(cli.getNick() + " joined channel: " + channel);

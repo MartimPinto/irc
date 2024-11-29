@@ -62,8 +62,11 @@
 #define RPL_CREATED(nick, date) (": 003 " + nick + ": This server was created " + date + CRLF)
 #define RPL_MYINFO(nickname) (": 004 " + SERVER_NAME + " :Server 1.0 ao mtik" + CRLF)
 #define RPL_ISUPPORT(nickname) (":" + SERVER_NAME+ " 005"  + nickname + "CHANTYPES=# PREFIX=(ov)@+ NETWORK=ExampleIRC CASEMAPPING=rfc1459 " + ":are supported by this server" + CRLF)
-#define RPL_LISTSTART(nickname) (": 321 " + nickname + " Channel Users :Topic" + CRLF)
-#define RPL_LIST(nickname, channelName, numUsers, topic) (": 322 " + nickname + " " + channelName + " " + numUsers + " :" + topic + CRLF)
+//#define RPL_LISTSTART(nickname) (": 321 " + nickname + " Channel Users :Topic" + CRLF)
+//#define RPL_LIST(nickname, channelName, numUsers, topic) (": 322 " + nickname + " " + channelName + " " + numUsers + " :" + topic + CRLF)
+#define RPL_LISTSTART(nick) (":" + this->_hostname + " 321 " + nick + " :Channel :Users :Topic\r\n")
+#define RPL_LIST(nick, name, numUsers, topic) (":" + this->_hostname + " 322 " + nick + " " + name + " " + numUsers + " :" + topic + "\r\n")
+
 #define RPL_TOPIC(channel, topic) (": 332 " + channel + " :" + topic + CRLF)
 #define RPL_JOIN(nickname, channelname) (":" + nickname + " JOIN " + channelname + CRLF)
 #define RPL_NAMREPLY(nickname, channel, names) (": 353 " + nickname + " = " + channel + " :" + names + CRLF)
