@@ -53,7 +53,7 @@ class Server
 			std::string _password;
 			std::string _serverMessage;
 			std::vector<struct pollfd> _fds;
-			std::vector<Client> _clients;
+			std::map<int, Client> _clients;
 			static bool Signal;
 			std::map<std::string, Channel> _channels;
 			std::string _startTime;
