@@ -73,7 +73,7 @@ void Client::authenticate()
 std::string Client::getNick()
 {
 	if (_nickname.empty())
-		return ("empty");
+		return ("");
 	return this->_nickname;
 }
 
@@ -164,8 +164,6 @@ void Client::joinChannel(std::string &channel)
 {
 	this->_channels.push_back(channel);
 }
-
-
 
 void Client::leaveChannel(const std::string &channel)
 {

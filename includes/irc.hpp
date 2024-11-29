@@ -68,7 +68,8 @@
 #define RPL_LISTSTART(nick) (":" + this->_hostname + " 321 " + nick + " :Channel :Users :Topic\r\n")
 #define RPL_LIST(nick, name, numUsers, topic) (":" + this->_hostname + " 322 " + nick + " " + name + " " + numUsers + " :" + topic + "\r\n")
 
-#define RPL_TOPIC(channel, topic) (": 332 " + channel + " :" + topic + CRLF)
+//#define RPL_TOPIC(channel, topic) (": 332 " + channel + " :" + topic + CRLF)
+#define RPL_TOPIC(nickname, channel, topic) (":" + nickname + " 332 " + channel + " :" + topic + CRLF)
 #define RPL_JOIN(nickname, channelname) (":" + nickname + " JOIN " + channelname + CRLF)
 #define RPL_NAMREPLY(nickname, channel, names) (": 353 " + nickname + " = " + channel + " :" + names + CRLF)
 #define RPL_ENDOFNAMES(nickname, channel) (": 366 " + nickname + " " + channel + " :End of NAMES list" + CRLF)

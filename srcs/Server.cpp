@@ -17,7 +17,7 @@ bool Server::Signal = false;
 void Server::sigHandler(int signum)
 {
 	std::cout << std::endl;
-	log("Signal Recieved!");
+	log("Signal Received!");
 	if (signum == SIGINT)
 	{
 		Server::Signal = true;
@@ -91,7 +91,6 @@ int Server::startServer()
 
 void Server::startListen()
 {
-	std::cout << "entrei start listen" << _port << std::endl;
 	std::cout << "\n *** Server: " 
 	<< _socket << " Connected" <<" ***" << std::endl;
 
@@ -114,18 +113,14 @@ void Server::startListen()
 			}
 		}
 	}
-	std::cout << "sai start listen" << _port << std::endl;
 }
 
 void Server::handleNewConnection()
 {
-	
-	std::cout << "entrei handle new connection" << std::endl;
 	Client cl;
 	struct sockaddr_in claddr;
 	struct pollfd npoll;
 	socklen_t len = sizeof(claddr);
-	
 	_newSocket = accept(_socket,(sockaddr *)&(claddr), &len);
 	if (_newSocket < 0)
 		exitError("accept() failed");
@@ -142,112 +137,51 @@ void Server::handleNewConnection()
 	_fds.push_back(npoll);
 
 	log("New connection accepted");
-	std::cout << "sai handle new connection" << std::endl;
 }
-
-// void Server::handleClient(int client_index)
-// {
-//     std::map<int, Client>::iterator it = _clients.find(client_index);
-//     if (it == _clients.end())
-//     {
-//         std::cout << "Client " << client_index << " not found" << std::endl;
-//         return;
-//     }
-
-//     std::vector<std::string> cmd;
-//     char buffer[BUFFER_SIZE];
-//     memset(buffer, 0, sizeof(buffer));
-//     Client &cli = it->second;
-//     int bytesReceived = recv(client_index, buffer, BUFFER_SIZE - 1, 0);
-//     std::cout << "----->Bytes Received: " << bytesReceived << std::endl;
-    
-//     if (bytesReceived <= 0)
-//     {
-//         std::cout << "------------->ENTREI!!!!" << std::endl;
-//         std::cout << "Client " << client_index << " disconnected" << std::endl;
-//         clearChannels(client_index);
-//         clearClients(client_index);
-//         close(client_index);
-//     }
-//     else
-//     {
-//         cli.setBuffer(buffer);
-//         // cli.getBuffer().append("\0");
-//         if (cli.getBuffer().find_first_of("\r\n") == std::string::npos)
-//             return;
-        
-//         log("Received message from client");
-//         cmd = splitBuffer(cli.getBuffer());
-//         for (size_t i = 0; i < cmd.size(); i++)
-//             parseCommand(cmd[i], cli, client_index);
-
-//         if (cli.getBuffer().find_first_of("\r\n") != std::string::npos)
-//             cli.clearBuffer();
-//     }
-// }
-
 
 void Server::handleClient(int client_index)
 {
-	std::cout << "entrei handle client" << std::endl;
     std::map<int, Client>::iterator it = _clients.find(client_index);
     if (it == _clients.end())
     {
         std::cout << "Client " << client_index << " not found" << std::endl;
         return;
     }
-
     std::vector<std::string> cmd;
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, sizeof(buffer));
     Client &cli = it->second;
     int bytesReceived = recv(client_index, buffer, BUFFER_SIZE - 1, 0);
-    std::cout << "----->Bytes Received: " << bytesReceived << std::endl;
-    
     if (bytesReceived <= 0)
     {
-        std::cout << "------------->ENTREI!!!!" << std::endl;
         std::cout << "Client " << client_index << " disconnected" << std::endl;
-
-        // Antes de remover o cliente do mapa, você pode limpar os canais
         clearChannels(client_index);
-
-        // Agora remova o cliente do mapa
-        _clients.erase(it);  // Certifique-se de remover o cliente corretamente
-
-        // Após a remoção, o cliente não deve ser acessado
+        _clients.erase(it);  
         close(client_index);
     }
     else
     {
         cli.setBuffer(buffer);
-
-        // Verifique se o buffer tem dados completos antes de processar
         if (cli.getBuffer().find_first_of("\r\n") == std::string::npos)
-            return;
-        
+            return;   
         log("Received message from client");
         cmd = splitBuffer(cli.getBuffer());
         for (size_t i = 0; i < cmd.size(); i++)
 		{
             parseCommand(cmd[i], cli, client_index);
 			if (cmd[i].find("QUIT") == 0 || cmd[i].find("quit") == 0)
-			{
 				return ;
-			}
 		}
 
         if (cli.getBuffer().find_first_of("\r\n") != std::string::npos)
             cli.clearBuffer();
     }
-	std::cout << "sai handle client" << std::endl;
 }
 
 
 
 void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 {
-	std::cout << "CMD: " << cmd << std::endl;
 	if (cmd.empty())
 		return;
 	if (!cli.isAuthenticated())
@@ -295,8 +229,8 @@ void Server::parseCommand(std::string cmd, Client &cli, int client_index)
 				handlePrivMSG(cmd, cli);
 			else if (cmd.find("LIST") == 0 || cmd.find("list") == 0)
 				handleList(cli);
-			/*else if (cmd.find("WHO") == 0 || cmd.find("who") == 0)
-				handleWho(cmd, cli);*/
+			else if (cmd.find("WHO") == 0 || cmd.find("who") == 0)
+				handleWho(cmd, cli);
 			else if (cli.isOperator())
 			{
 				if (cmd.find("TOPIC") == 0 || cmd.find("topic") == 0)
@@ -448,80 +382,6 @@ void Server::handleLuser(Client &cli)
 	sendResponse(RPL_UMODEIS(cli.getNick(), cli.getModes()), cli.getFd());
 }
 
-/*void Server::handleJoin(std::string cmd, Client &cli)
-{
-    std::istringstream iss(cmd);
-    std::string command, channel, password;
-    iss >> command >> channel >> password;
-
-    if (channel.empty() || channel[0] != '#' || channel.size() > 50)
-    {
-        std::string error = "ERROR: Invalid channel name\r\n";
-        send(cli.getFd(), error.c_str(), error.length(), 0);
-        return;
-    }
-
-    std::pair<std::map<std::string, Channel>::iterator, bool> result = 
-        _channels.insert(std::make_pair(channel, Channel(channel)));
-    Channel &chan = result.first->second;
-
-    if (result.second) 
-    {
-        chan.addOperator(cli);
-        cli.setOperator();
-        log("Created new channel: " + channel);
-    }
-
-	if (chan.hasKey() && chan.getKey() != password)
-    {
-        sendResponse(ERR_BADCHANNELKEY(channel), cli.getFd());
-        return;
-    }
-
-    if (chan.isInviteOnly() && !chan.isClientInvited(cli))
-    {
-        sendResponse(ERR_INVITEONLYCHAN(channel), cli.getFd());
-        return;
-    }
-
-    if (chan.hasUserLimit() && chan.getNumUsers() >= chan.getUserLimit())
-    {
-        sendResponse(ERR_CHANNELISFULL(channel), cli.getFd());
-        return;
-    }
-
-    chan.addClient(&cli);        // Adiciona o cliente ao canal
-    cli.joinChannel(channel);    // Marca o cliente como parte do canal
-
-    // Notifica o cliente que entrou
-    std::string welcomeMessage = ":" + cli.getNick() + " JOIN " + channel + "\r\n";
-    send(cli.getFd(), welcomeMessage.c_str(), welcomeMessage.length(), 0);
-
-    // Notifica os outros clientes no canal
-    std::vector<Client *> clientsInChannel = chan.getClients();
-    for (size_t i = 0; i < clientsInChannel.size(); ++i) 
-    {
-        if (clientsInChannel[i]->getFd() != cli.getFd()) 
-        {
-            // Envia a mensagem de entrada do novo cliente
-            std::string joinMsg = ":" + cli.getNick() + " JOIN " + channel + "\r\n";
-            send(clientsInChannel[i]->getFd(), joinMsg.c_str(), joinMsg.length(), 0);
-        }
-    }
-	std::vector<Client *>().swap(clientsInChannel);
-
-    log(cli.getNick() + " joined channel: " + channel);
-
-    //Adiciona a resposta NAMES para o novo cliente
-    std::string namesList = chan.getNamesList();
-    std::string namesResponse = ":" + SERVER_NAME + " 353 " + cli.getNick() +
-                                 " = " + channel + " :" + namesList + "\r\n";
-    namesResponse += ":" + SERVER_NAME + " 366 " + cli.getNick() +
-                     " " + channel + " :End of /NAMES list.\r\n";
-    send(cli.getFd(), namesResponse.c_str(), namesResponse.length(), 0);
-}*/
-
-
 void Server::handleJoin(std::string cmd, Client &cli) 
 {
     std::istringstream iss(cmd);
@@ -571,7 +431,6 @@ void Server::handleJoin(std::string cmd, Client &cli)
 
     sendResponse(RPL_JOIN(cli.getNick(), channel), cli.getFd());
     Channel &chan = it->second;
-	std::cout << "-----------------> Valor do cliente DF que dá erro: " << cli.getFd() << std::endl;
     chan.broadcastMessage(":" + cli.getNick() + " JOIN " + channel + CRLF, cli.getFd());
 
     log(cli.getNick() + " joined channel: " + channel);
@@ -718,8 +577,11 @@ void Server::handleTopic(std::string cmd, Client &cli)
 	std::istringstream iss(cmd);
 	std::string command, channel, topic;
 	iss >> command >> channel;
+	std::cout << "CHANNEL: " << channel << std::endl;
+	std::cout << "COMMAND: " << command << std::endl;
 	std::getline(iss, topic);
 	removeSpacesAtStart(topic);
+	std::cout << "TOPIC: " << topic << std::endl;
 	if (!topic.empty() && topic[0] == ':')
 		topic = topic.substr(1);
 	std::map<std::string, Channel>::iterator it = _channels.find(channel);
@@ -750,8 +612,7 @@ void Server::handleTopic(std::string cmd, Client &cli)
 	{
 		if (chan.hasTopic())
 		{
-			std::string currentTopicMsg = RPL_TOPIC(channel, chan.getTopic());
-        	send(cli.getFd(), currentTopicMsg.c_str(), currentTopicMsg.length(), 0);
+			sendResponse(RPL_TOPIC(cli.getNick(), channel, chan.getTopic()), cli.getFd());
 		}
 		else
 		{
@@ -799,75 +660,11 @@ void Server::handleInvite(std::string cmd, Client &cli)
 	send(target->getFd(), inviteMsg.c_str(), inviteMsg.length(), 0);
 }
 
-	
-
-/*void Server::handleQuit(std::string cmd, int fd)
-{
-    std::string message = extractCommand(cmd, 5);
-    if (message.empty())
-        message = "Client quit";
-
-    std::string quitMessage = ":" + getClient(fd).getNick() + " QUIT :" + message + "\r\n";
-
-    std::vector<std::string> channels = getClient(fd).getChannels();
-    std::map<int, std::string> emptyChannels;
-
-    for (size_t i = 0; i < channels.size(); ++i)
-    {
-        std::map<std::string, Channel>::iterator it = _channels.find(channels[i]);
-        if (it != _channels.end())
-        {
-            Channel &chan = it->second;
-            chan.removeClient(&getClient(fd));
-
-            // Notify remaining clients
-            std::vector<Client *> clientsInChannel = chan.getClients();
-            for (size_t j = 0; j < clientsInChannel.size(); ++j)
-            {
-                send(clientsInChannel[j]->getFd(), quitMessage.c_str(), quitMessage.length(), 0);
-            }
-
-            if (chan.getClients().empty())
-            {
-                emptyChannels.insert(std::make_pair(i, channels[i]));  // Mark empty channels for deletion
-            }
-        }
-    }
-
-    // Delete empty channels after the loop
-	std::map<int, std::string>::iterator it;
-	for (it = emptyChannels.begin(); it != emptyChannels.end(); ++it)
-	{
-		_channels.erase(it->second);
-		log("Channel " + it->second + " has been deleted");
-	}
-    for (size_t i = 0; i < emptyChannels.size(); ++i)
-    {
-        _channels.erase(emptyChannels[i]);
-        log("Channel " + emptyChannels[i] + " has been deleted");
-    }
-
-    // Log client quit
-    log("Client " + getClient(fd).getNick() + " has quit");
-
-    // Clear client resources and close connection
-	emptyChannels.clear();
-    clearChannels(fd);
-    clearClients(fd);
-    close(fd);
-
-}*/
-
 void Server::handleQuit(std::string cmd, int fd)
 {
-    std::cout << "ENTREI NO HANDLE QUIT" << std::endl;
-	// Procurar o cliente no mapa
     std::map<int, Client>::iterator it = _clients.find(fd);
     if (it == _clients.end()) 
-	{
-		std::cout << "CLIENTE NÃO ENCONTRADO" << std::endl;
-        return; // Cliente já foi removido ou não existe
-    }
+        return;
 
     Client& client = it->second;
     std::string message = extractCommand(cmd, 5);
@@ -875,15 +672,8 @@ void Server::handleQuit(std::string cmd, int fd)
         message = "Client quit";
     }
 	
-	if (client.getNick().empty())
-		std::cout << "NICK VAZIO" << std::endl;
-
     std::string quitMessage = ":" + client.getNick() + " QUIT :" + message + "\r\n";
-
-    // Armazenar informações do cliente antes de apagá-lo
     std::vector<std::string> channels = client.getChannels();
-
-    // Notificar canais
     std::set<std::string> emptyChannels;
     for (std::vector<std::string>::size_type i = 0; i < channels.size(); ++i)
     {
@@ -892,36 +682,22 @@ void Server::handleQuit(std::string cmd, int fd)
         {
             Channel& chan = chanIt->second;
             chan.removeClient(&client);
-
-            // Notificar outros clientes no canal
             std::vector<Client*> clientsInChannel = chan.getClients();
             for (std::vector<Client*>::size_type j = 0; j < clientsInChannel.size(); ++j)
-            {
                 send(clientsInChannel[j]->getFd(), quitMessage.c_str(), quitMessage.length(), 0);
-            }
-
             if (chan.getClients().empty())
-            {
-                emptyChannels.insert(channels[i]); // Marcar canais vazios
-            }
+                emptyChannels.insert(channels[i]);
         }
     }
-
-    // Apagar canais vazios
     for (std::set<std::string>::iterator it = emptyChannels.begin(); it != emptyChannels.end(); ++it)
     {
         _channels.erase(*it);
         log("Channel " + *it + " has been deleted");
     }
-
-    // Log de saída do cliente
     log("Client " + client.getNick() + " has quit");
-
-    // Apagar cliente
 	emptyChannels.clear();
 	clearChannels(fd);
     clearClients(fd);
-	std::cout << "FIZ CLOSE DO CLIENTE" << std::endl;
     close(fd);
 }
 
@@ -931,9 +707,9 @@ Client &Server::getClient(int fd)
 {
     std::map<int, Client>::iterator it = _clients.find(fd);
     if (it != _clients.end()) {
-        return it->second; // Retorna o cliente encontrado
+        return it->second; 
     }
-    throw std::runtime_error("Client not found"); // Cliente não encontrado
+    throw std::runtime_error("Client not found"); 
 }
 
 Client *Server::getClientNick(const std::string &nick)
@@ -976,64 +752,33 @@ void Server::handlePart(std::string cmd, Client &cli)
         sendResponse(ERR_NOSUCHCHANNEL(channel), cli.getFd());
         return;
     }
-
-    // Verificar se o canal existe e se o cliente está no canal
     std::map<std::string, Channel>::iterator it = _channels.find(channel);
     if (it == _channels.end() || !it->second.isClientInChannel(cli))
     {
         sendResponse(ERR_NOTONCHANNEL(channel), cli.getFd());
         return;
     }
-
 	Channel &chan = it->second;
-    // Remover o cliente do canal
-    chan.removeClient(&cli);  // Passando ponteiro de 'cli' corretamente
+    chan.removeClient(&cli);  
     cli.leaveChannel(channel);
-	/*if (chan.isOperator(cli))
-	{
-
-    	//chan.removeOperator(&cli);
-    	std::vector<Client *> clients = chan.returnClients();
-    	if (!clients.empty())
-    	{
-        	Client &nextClient = *clients[0]; // Now clients[0] is the next client in line
-        	chan.addOperator(nextClient);
-			nextClient.setOperator();
-			std::string response = ":" + SERVER_NAME + " MODE " + channel + " +o " + nextClient.getNick() + "\r\n";
-        	send(nextClient.getFd(), response.c_str(), response.length(), 0);
-    	}
-	}*/
-
-    // Mensagem de PART para o cliente que saiu
    	std::string partMessage = ":" + cli.getNick() + "!" + cli.getUser() + "@localhost PART " + channel;
 	if (!reason.empty())
 		partMessage += " :" + reason + "\r\n";
 	else
 		partMessage += "\r\n";
-    send(cli.getFd(), partMessage.c_str(), partMessage.length(), 0);  // Enviar ao cliente que partiu
-	/*std::string confirmation = ":" + cli.getNick() + "!" + cli.getUser() + "@localhost PART " + channel + "\r\n";
-	send(cli.getFd(), confirmation.c_str(), confirmation.length(), 0);*/
-    // Enviar a mensagem de PART para todos os outros clientes no canal
+    send(cli.getFd(), partMessage.c_str(), partMessage.length(), 0);  
     std::vector<Client *> clientsInChannel = it->second.getClients();
     for (size_t i = 0; i < clientsInChannel.size(); ++i)
     {
-        // Não envie a mensagem para o cliente que fez o PART
         if (clientsInChannel[i]->getFd() != cli.getFd()) 
-        {
             send(clientsInChannel[i]->getFd(), partMessage.c_str(), partMessage.length(), 0);
-        }
     }
 	log(cli.getNick() + " left channel: " + channel);
-
-    // Se o canal estiver vazio, remova o canal da lista de canais
     if (it->second.getNumUsers() == 0)
     {
         _channels.erase(it);
 		if (cli.isOperator())
-		{
 			cli.removeOperator();
-		}
-		
 		log("Channel " + channel + " has been deleted");
     }
 }
