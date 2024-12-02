@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/31 12:12:24 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/25 16:36:21 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/12/02 14:50:03 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,6 @@ void Server::handleMode(std::string cmd, Client &cli)
 	}
 	char flag = mode[0];
 	char modeOption = mode[1];
-	std::cout << "Mode: " << mode[1] << std::endl;
 	if (modeOption == 'o')
 		handleOperatorMode(cli, chan, param, flag);
 	else if (modeOption == 't')
