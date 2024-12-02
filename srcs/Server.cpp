@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/12 15:17:26 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/27 17:04:12 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/12/02 11:45:14 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -367,7 +367,12 @@ void Server::handleUser(std::string cmd, Client &cli)
 
 void Server::handleLuser(Client &cli)
 {
-	int numClients = _clients.size();
+	int numClients = 0;
+    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+    {
+        if (it->second.isRegistered())
+            ++numClients;
+    }
 	int numChannels = _channels.size();
 	int numOperators = this->countOperators();
 	
@@ -577,11 +582,8 @@ void Server::handleTopic(std::string cmd, Client &cli)
 	std::istringstream iss(cmd);
 	std::string command, channel, topic;
 	iss >> command >> channel;
-	std::cout << "CHANNEL: " << channel << std::endl;
-	std::cout << "COMMAND: " << command << std::endl;
 	std::getline(iss, topic);
 	removeSpacesAtStart(topic);
-	std::cout << "TOPIC: " << topic << std::endl;
 	if (!topic.empty() && topic[0] == ':')
 		topic = topic.substr(1);
 	std::map<std::string, Channel>::iterator it = _channels.find(channel);
