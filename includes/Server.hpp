@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/13 12:06:14 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/11/27 12:34:18 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/12/02 12:18:43 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,8 +56,7 @@ class Server
 			std::map<int, Client> _clients;
 			static bool Signal;
 			std::map<std::string, Channel> _channels;
-			std::string _startTime;
-			
+			std::string _startTime;			
 
 			int startServer();
 			std::string getStartTime();

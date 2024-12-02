@@ -97,3 +97,15 @@ std::vector<std::string> splitBuffer(std::string buffer)
     }
     return result;
 }
+
+std::vector<std::string> splitString(std::string str, char delimiter)
+{
+    std::vector<std::string> result;
+    std::istringstream iss(str);
+    std::string token;
+    while (std::getline(iss, token, delimiter))
+    {
+        result.push_back(token);
+    }
+    return result;
+}

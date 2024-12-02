@@ -95,5 +95,6 @@ std::string extractCommand(std::string &cmd, int characters);
 bool isNumber(const std::string &str);
 bool isValidNick(const std::string &nick);
 std::vector<std::string> splitBuffer(std::string buffer);
+std::vector<std::string> splitString(std::string str, char delimiter);
 
 #endif
