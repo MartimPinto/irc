@@ -6,7 +6,7 @@
 /*   By: mcarneir <mcarneir@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 17:12:05 by mcarneir          #+#    #+#             */
-/*   Updated: 2024/12/02 14:19:58 by mcarneir         ###   ########.fr       */
+/*   Updated: 2024/12/02 15:31:47 by mcarneir         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,8 +184,6 @@ void Client::setBuffer(std::string buffer)
 {
 	if (buffer.empty())
 		return ;
-	/*if (!_buffer.empty())
-		_buffer.clear();*/
 	_buffer += buffer;
 }
 
