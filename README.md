@@ -10,7 +10,7 @@
 
 
 ## About
-The ft_irc project consists of implementing a simple **Internet Relay Chat (IRC)** server in C++. The server should be able to accept connections from multiple concurrent clients, handle disconnections, support private messaging and the creation of channels. A client can connect to the server using either **Hexchat** or the `nc` command.
+The ft_irc project consists of implementing a simple **Internet Relay Chat (IRC)** server in C++. The server should be able to accept connections from multiple concurrent clients, handle disconnections, support private messaging and the creation of channels. A client can connect to the server using either **Hexchat** or the `nc` command. The group for this project consisted of myself, [filipepinholiveira](https://github.com/filipepinholiveira) and [diocode](https://github.com/diocode)
 
 <img src="demo.gif" width="100%"/>
 
