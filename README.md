@@ -12,6 +12,8 @@
 ## About
 The ft_irc project consists of implementing a simple **Internet Relay Chat (IRC)** server in C++. The server should be able to accept connections from multiple concurrent clients, handle disconnections, support private messaging and the creation of channels. A client can connect to the server using either **Hexchat** or the `nc` command.
 
+<img src="demo.gif" width="100%"/>
+
 ## Usage
 `git clone` this project and`cd` into its folder. Open a terminal and after you run `make` the program is ready to be executed as so:
 
@@ -92,5 +94,4 @@ The project is written using the C++98 standard. Network communication is handle
 - When a new client connects, the server accepts the new connection using `accept()`, adds the new client file descriptor to the list and creates a Client object to store all its metadata.
 - When a client sneds data, the server reads it using `recv()`, sends it to a buffer to handle partial commands, parses that buffer, executes the command an sends responses back to the client using `send()`
 
-<img src="demo.gif" width="100%"/>
 
