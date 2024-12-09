@@ -56,7 +56,9 @@ Once connected to the server, users have access to these commands:
 - QUIT:
    - When using the QUIT command that user will disconnect from the Server in clean fashion, parting from any channels they are part of and closing the socket they use for communication.
    - **Usage:** `QUIT`
-
+ <br>
+ <br>
+ 
 While those commands are available to any user, there is also a list of **operator-exclusive** commands:
 
 - KICK:
